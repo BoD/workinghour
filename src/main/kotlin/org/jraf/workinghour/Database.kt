@@ -2,6 +2,7 @@ package org.jraf.workinghour
 
 import java.io.File
 import java.sql.DriverManager
+import java.sql.ResultSet
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -9,6 +10,7 @@ import java.util.Date
 class Database(private val path: File) {
     companion object {
         private val ID_DATE_FORMAT = SimpleDateFormat("yyyyMMddHHmm")
+        private const val MAX_ID = 999999999999
     }
 
     private val connection by lazy {
@@ -17,15 +19,15 @@ class Database(private val path: File) {
         connection.createStatement()
             .executeUpdate(
                 """
-                    CREATE TABLE IF NOT EXISTS minute (
-                        id INTEGER PRIMARY KEY ON CONFLICT IGNORE NOT NULL,
-                        year INTEGER NOT NULL,
-                        month INTEGER NOT NULL,
-                        day INTEGER NOT NULL,
-                        hour INTEGER NOT NULL,
-                        minute INTEGER NOT NULL
-                    )
-                    """.trimIndent()
+                CREATE TABLE IF NOT EXISTS minute (
+                    id INTEGER PRIMARY KEY ON CONFLICT IGNORE NOT NULL,
+                    year INTEGER NOT NULL,
+                    month INTEGER NOT NULL,
+                    day INTEGER NOT NULL,
+                    hour INTEGER NOT NULL,
+                    minute INTEGER NOT NULL
+                )
+                """.trimIndent()
             )
         connection
     }
@@ -34,13 +36,15 @@ class Database(private val path: File) {
         connection.prepareStatement("INSERT INTO minute (id, year, month, day, hour, minute) VALUES (?, ?, ?, ?, ?, ?)")
     }
 
-    private val selectMinutesWorkedToday by lazy {
+    private val selectMinutesWorkedOnDay by lazy {
         connection.prepareStatement(
             """
-            SELECT count(*) FROM minute WHERE
-                year=?
-                AND month=?
-                AND day=?
+            SELECT count(*)
+            FROM minute
+            WHERE
+            year=?
+            AND month=?
+            AND day=?
              """.trimIndent()
         )
     }
@@ -48,19 +52,63 @@ class Database(private val path: File) {
     private val selectMinutesWorkedThisMonth by lazy {
         connection.prepareStatement(
             """
-            SELECT count(*) FROM minute WHERE
-                year=?
-                AND month=?
-             """.trimIndent()
+            SELECT count(*)
+            FROM minute
+            WHERE
+            year=?
+            AND month=?
+            """.trimIndent()
         )
     }
 
-    private val selectMinutesWorkedSinceDate by lazy {
-        connection.prepareStatement("SELECT count(*) FROM minute WHERE id>=?")
+    private val selectMinutesWorkedBetweenDates by lazy {
+        connection.prepareStatement("SELECT count(*) FROM minute WHERE id>=? AND id<?")
     }
 
     private val selectFirstLog by lazy {
         connection.prepareStatement("SELECT year, month, day, hour, minute FROM minute ORDER BY id")
+    }
+
+    private val selectFirstLogOfDay by lazy {
+        connection.prepareStatement(
+            """
+            SELECT year, month, day, hour, minute
+            FROM minute
+            WHERE
+            year=?
+            AND month=?
+            AND day=?
+            ORDER BY id
+            """.trimIndent()
+        )
+    }
+
+    private val selectLastLogOfDay by lazy {
+        connection.prepareStatement(
+            """
+            SELECT year, month, day, hour, minute
+            FROM minute
+            WHERE
+            year=?
+            AND month=?
+            AND day=?
+            ORDER BY id DESC
+            """.trimIndent()
+        )
+    }
+
+    private val selectAverageMinutesPerDay by lazy {
+        connection.prepareStatement(
+            """
+            SELECT minutes / days
+            FROM (
+                SELECT count(*) as days,
+                (SELECT count(*) FROM minute) as minutes
+                FROM
+                (SELECT DISTINCT year, month, day FROM minute)
+            )
+            """.trimIndent()
+        )
     }
 
 
@@ -69,22 +117,61 @@ class Database(private val path: File) {
 
     fun logMinute() {
         val now = Calendar.getInstance()
+        logMinute(now)
+    }
+
+    fun logTestData() {
+        val cal = Calendar.getInstance()
+        cal.add(Calendar.DAY_OF_MONTH, -60)
+        for (i in 1..60) {
+            cal.add(Calendar.DAY_OF_WEEK, 1)
+            // Skip weekends
+            if (cal[Calendar.DAY_OF_WEEK] == Calendar.SATURDAY || cal[Calendar.DAY_OF_WEEK] == Calendar.SUNDAY) continue
+            // Morning
+            cal[Calendar.HOUR_OF_DAY] = 9
+            cal[Calendar.MINUTE] = 12
+            while (true) {
+                cal.add(Calendar.MINUTE, 1)
+                if (Math.random() < 1F / 180F) {
+                    // Random 20 min break
+                    cal.add(Calendar.MINUTE, 10)
+                }
+                logMinute(cal)
+
+                if (cal[Calendar.HOUR_OF_DAY] >= 12) break
+            }
+            // Afternoon
+            cal[Calendar.HOUR_OF_DAY] = 13
+            cal[Calendar.MINUTE] = 32
+            while (true) {
+                cal.add(Calendar.MINUTE, 1)
+                if (Math.random() < 1F / 180F) {
+                    // Random 15 min break
+                    cal.add(Calendar.MINUTE, 20)
+                }
+                logMinute(cal)
+
+                if (cal[Calendar.HOUR_OF_DAY] >= 19) break
+            }
+        }
+    }
+
+    private fun logMinute(cal: Calendar) {
         insertMinute.apply {
-            setLong(1, getIdForCalendar(now))
-            setInt(2, now[Calendar.YEAR])
-            setInt(3, now[Calendar.MONTH] + 1)
-            setInt(4, now[Calendar.DAY_OF_MONTH])
-            setInt(5, now[Calendar.HOUR_OF_DAY])
-            setInt(6, now[Calendar.MINUTE])
+            setLong(1, getIdForCalendar(cal))
+            setInt(2, cal[Calendar.YEAR])
+            setInt(3, cal[Calendar.MONTH] + 1)
+            setInt(4, cal[Calendar.DAY_OF_MONTH])
+            setInt(5, cal[Calendar.HOUR_OF_DAY])
+            setInt(6, cal[Calendar.MINUTE])
         }.execute()
     }
 
-    fun minutesWorkedToday(): Int {
-        val now = Calendar.getInstance()
-        return selectMinutesWorkedToday.apply {
-            setInt(1, now[Calendar.YEAR])
-            setInt(2, now[Calendar.MONTH] + 1)
-            setInt(3, now[Calendar.DAY_OF_MONTH])
+    fun minutesWorkedOnDay(cal: Calendar): Int {
+        return selectMinutesWorkedOnDay.apply {
+            setInt(1, cal[Calendar.YEAR])
+            setInt(2, cal[Calendar.MONTH] + 1)
+            setInt(3, cal[Calendar.DAY_OF_MONTH])
         }.executeQuery().getInt(1)
     }
 
@@ -101,38 +188,69 @@ class Database(private val path: File) {
         cal.add(Calendar.DAY_OF_MONTH, -30)
         cal[Calendar.HOUR_OF_DAY] = 0
         cal[Calendar.MINUTE] = 0
-        return selectMinutesWorkedSinceDate.apply {
+        return selectMinutesWorkedBetweenDates.apply {
             setLong(1, getIdForCalendar(cal))
+            setLong(2, MAX_ID)
         }.executeQuery().getInt(1)
     }
 
-    fun minutesWorkedThisWeek(): Int {
-        val cal = Calendar.getInstance()
-        cal[Calendar.DAY_OF_WEEK] = Calendar.MONDAY
-        cal[Calendar.HOUR_OF_DAY] = 0
-        cal[Calendar.MINUTE] = 0
-        return selectMinutesWorkedSinceDate.apply {
-            setLong(1, getIdForCalendar(cal))
+    fun minutesWorkedOnWeek(dayInWeek: Calendar): Int {
+        val from = dayInWeek.clone() as Calendar
+        from[Calendar.DAY_OF_WEEK] = Calendar.MONDAY
+        from[Calendar.HOUR_OF_DAY] = 0
+        from[Calendar.MINUTE] = 0
+        val to = from.clone() as Calendar
+        to.add(Calendar.WEEK_OF_YEAR, 1)
+        return selectMinutesWorkedBetweenDates.apply {
+            setLong(1, getIdForCalendar(from))
+            setLong(2, getIdForCalendar(to))
         }.executeQuery().getInt(1)
     }
 
     fun minutesWorkedTotal(): Int {
-        return selectMinutesWorkedSinceDate.apply {
+        return selectMinutesWorkedBetweenDates.apply {
             setInt(1, 0)
+            setLong(2, MAX_ID)
         }.executeQuery().getInt(1)
     }
 
     fun firstLog(): Date {
-        val cal = Calendar.getInstance()
         val resultSet = selectFirstLog.executeQuery()
-        cal[Calendar.YEAR] = resultSet.getInt(1)
-        cal[Calendar.MONTH] = resultSet.getInt(2) - 1
-        cal[Calendar.DAY_OF_WEEK] = resultSet.getInt(3)
-        cal[Calendar.HOUR_OF_DAY] = resultSet.getInt(4)
-        cal[Calendar.MINUTE] = resultSet.getInt(5)
-        cal[Calendar.SECOND] = 0
-        cal[Calendar.MILLISECOND] = 0
-        return cal.time
+        return dateFromResultSet(resultSet)!!
     }
 
+    fun averageMinutesPerDay(): Int {
+        return selectAverageMinutesPerDay.executeQuery().getInt(1)
+    }
+
+    fun firstLogOfDay(cal: Calendar): Date? {
+        val resultSet = selectFirstLogOfDay.apply {
+            setInt(1, cal[Calendar.YEAR])
+            setInt(2, cal[Calendar.MONTH] + 1)
+            setInt(3, cal[Calendar.DAY_OF_MONTH])
+        }.executeQuery()
+        return dateFromResultSet(resultSet)
+    }
+
+    fun lastLogOfDay(cal: Calendar): Date? {
+        val resultSet = selectLastLogOfDay.apply {
+            setInt(1, cal[Calendar.YEAR])
+            setInt(2, cal[Calendar.MONTH] + 1)
+            setInt(3, cal[Calendar.DAY_OF_MONTH])
+        }.executeQuery()
+        return dateFromResultSet(resultSet)
+    }
+
+    private fun dateFromResultSet(resultSet: ResultSet): Date? {
+        if (!resultSet.isBeforeFirst) return null
+        val res = Calendar.getInstance()
+        res[Calendar.YEAR] = resultSet.getInt(1)
+        res[Calendar.MONTH] = resultSet.getInt(2) - 1
+        res[Calendar.DAY_OF_WEEK] = resultSet.getInt(3)
+        res[Calendar.HOUR_OF_DAY] = resultSet.getInt(4)
+        res[Calendar.MINUTE] = resultSet.getInt(5)
+        res[Calendar.SECOND] = 0
+        res[Calendar.MILLISECOND] = 0
+        return res.time
+    }
 }
