@@ -12,11 +12,14 @@ import org.jraf.workinghour.util.purple
 import org.jraf.workinghour.util.underline
 import org.jraf.workinghour.util.workingDayAgo
 import org.jraf.workinghour.util.yellow
+import java.awt.MouseInfo
+import java.awt.Point
 import java.io.File
-import java.lang.Thread.sleep
 import java.util.Calendar
 import java.util.Date
 import java.util.concurrent.TimeUnit
+
+private var latestMouseLocation: Point? = null
 
 @Throws(Throwable::class)
 fun main(av: Array<String>) {
@@ -37,10 +40,19 @@ fun main(av: Array<String>) {
     val database = Database(File("workinghour.db"))
 //    database.logTestData()
 
+    printStats(database)
     while (true) {
+        logIfActivityDetected(database)
+        Thread.sleep(TimeUnit.MINUTES.toMillis(1))
+    }
+}
+
+private fun logIfActivityDetected(database: Database) {
+    val newMouseLocation = MouseInfo.getPointerInfo().location
+    if (latestMouseLocation != newMouseLocation) {
+        latestMouseLocation = newMouseLocation
         database.logMinute()
         printStats(database)
-        sleep(TimeUnit.MINUTES.toMillis(1))
     }
 }
 
