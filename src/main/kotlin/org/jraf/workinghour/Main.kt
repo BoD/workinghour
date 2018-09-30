@@ -56,6 +56,7 @@ class Main {
 
         val arguments = Arguments()
         val jCommander = JCommander.newBuilder()
+            .programName(PROGRAM_NAME)
             .addObject(arguments)
             .build()
         jCommander.parse(*av)
@@ -191,6 +192,7 @@ class Main {
     }
 
     companion object {
+        private const val PROGRAM_NAME = "workinghour"
         private const val STATS_FILE_NAME = "workinghour.stats.txt"
 
         @Suppress("NOTHING_TO_INLINE")

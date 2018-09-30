@@ -38,7 +38,7 @@ class Arguments {
 
     @Parameter(
         names = ["-p", "--path"],
-        description = "The path to the directory where the db and stats files will be stored.  This directory must exist.  Default value: current directory"
+        description = "The path to the directory where the db and stats files will be stored.  This directory must exist"
     )
     var path: File = File(".")
 }
