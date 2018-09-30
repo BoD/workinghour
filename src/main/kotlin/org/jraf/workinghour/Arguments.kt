@@ -1,6 +1,7 @@
 package org.jraf.workinghour
 
 import com.beust.jcommander.Parameter
+import java.io.File
 
 class Arguments {
     @Parameter(
@@ -10,20 +11,9 @@ class Arguments {
     )
     var help: Boolean = false
 
-//    @Parameter(
-//        names = ["-m", "--mac-address"],
-//        description = "The mac address to monitor, e.g. fc:a6:67:ee:31:c0"
-//    )
-//    var macAddress: String? = null
-//
-//    @Parameter(
-//        names = ["-d", "--debug"],
-//        description = "Debug mode, if enabled, debug logs will be output"
-//    )
-//    var debugMode: Boolean = false
-//
-//    @Parameter(
-//        description = "The command to execute"
-//    )
-//    var commandToExecute = mutableListOf<String>()
+    @Parameter(
+        names = ["-p", "--path"],
+        description = "The path to the directory where the db and stats files will be stored.  This directory must exist.  Default value: current directory"
+    )
+    var path: File = File(".")
 }

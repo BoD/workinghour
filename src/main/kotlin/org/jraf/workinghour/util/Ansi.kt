@@ -94,9 +94,9 @@ fun Color.toAnsi256Foreground() = "${ANSI_ESC}38;5;${rgbToAnsi256(red, green, bl
 
 fun Color.toAnsi256Background() = "${ANSI_ESC}48;5;${rgbToAnsi256(red, green, blue)}m"
 
-inline fun bold(s: String) = "$ANSI_BOLD_ON$s$ANSI_BOLD_OFF"
-inline fun underline(s: String) = "$ANSI_UNDERLINE_ON$s$ANSI_UNDERLINE_OFF"
+inline fun bold(s: String, ansiSupported: Boolean) = if (ansiSupported) "$ANSI_BOLD_ON$s$ANSI_BOLD_OFF" else s
+inline fun underline(s: String, ansiSupported: Boolean) = if (ansiSupported) "$ANSI_UNDERLINE_ON$s$ANSI_UNDERLINE_OFF" else s
 
-inline fun yellow(s: String) = "$ANSI_YELLOW$s$ANSI_RESET_COLORS"
-inline fun purple(s: String) = "$ANSI_PURPLE$s$ANSI_RESET_COLORS"
-inline fun blue(s: String) = "$ANSI_BLUE$s$ANSI_RESET_COLORS"
+inline fun yellow(s: String, ansiSupported: Boolean) = if (ansiSupported) "$ANSI_YELLOW$s$ANSI_RESET_COLORS" else s
+inline fun purple(s: String, ansiSupported: Boolean) = if (ansiSupported) "$ANSI_PURPLE$s$ANSI_RESET_COLORS" else s
+inline fun blue(s: String, ansiSupported: Boolean) = if (ansiSupported) "$ANSI_BLUE$s$ANSI_RESET_COLORS" else s

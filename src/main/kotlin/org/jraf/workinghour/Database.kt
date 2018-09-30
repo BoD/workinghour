@@ -7,15 +7,16 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 
-class Database(private val path: File) {
+class Database(private val directory: File) {
     companion object {
         private val ID_DATE_FORMAT = SimpleDateFormat("yyyyMMddHHmm")
         private const val MAX_ID = 999999999999
+        private const val FILE_NAME = "workinghour.db"
     }
 
     private val connection by lazy {
         Class.forName("net.sf.log4jdbc.DriverSpy")
-        val connection = DriverManager.getConnection("jdbc:log4jdbc:sqlite:${path.canonicalPath}")
+        val connection = DriverManager.getConnection("jdbc:log4jdbc:sqlite:${File(directory, FILE_NAME).canonicalPath}")
         connection.createStatement()
             .executeUpdate(
                 """

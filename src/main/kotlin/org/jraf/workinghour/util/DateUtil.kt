@@ -4,7 +4,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 
-private val HOUR_MINUTE_FORMAT = SimpleDateFormat("HH:mm")
+private val HOUR_MINUTE_FORMAT = SimpleDateFormat("H:mm")
 private val DAY_FORMAT = SimpleDateFormat("MMMM d yyyy")
 private val WEEK_DAY_FORMAT = SimpleDateFormat("EEEE")
 
