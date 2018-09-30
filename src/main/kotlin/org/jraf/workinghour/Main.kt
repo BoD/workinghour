@@ -50,7 +50,7 @@ private fun printStats(database: Database) {
     // Today
     val now = Calendar.getInstance()
     var firstLog = database.firstLogOfDay(now)
-    println(yellow("Today: ") + formatDuration(database.minutesWorkedOnDay(now)) + if (firstLog != null) purple("  ↘ ${firstLog.formatHourMinute()}") else "")
+    println(yellow("Today: ") + formatDuration(database.minutesWorkedOnDay(now)) + if (firstLog != null) purple(" ${firstLog.formatHourMinute()}") else "")
 
     // Yesterday
     val yesterday = workingDayAgo(1)
@@ -115,10 +115,11 @@ private fun printStats(database: Database) {
 
     println()
 
-    println(underline(bold(yellow("Average"))) + ": " + bold(formatDuration(database.averageMinutesPerDay()) + " per day") + " (since " + database.firstLog().formatDay() + ")")
+    val averageMinutesPerDay = database.averageMinutesPerDay()
+    println(yellow(underline(bold("Average")) + ": ") + bold(formatDuration(averageMinutesPerDay) + " per day") + " (${formatDuration(averageMinutesPerDay * 5)} per week) since ${database.firstLog().formatDay()}")
 }
 
 @Suppress("NOTHING_TO_INLINE")
 private inline fun arrivedAtLeftAt(firstLog: Date?, lastLog: Date?) =
-    if (firstLog != null && lastLog != null) "  " + purple("↘ ${firstLog.formatHourMinute()}") + "  " + blue("↗ ${lastLog.formatHourMinute()}") else ""
+    if (firstLog != null && lastLog != null) " ${purple(firstLog.formatHourMinute())} ${blue(lastLog.formatHourMinute())}" else ""
 

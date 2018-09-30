@@ -36,7 +36,7 @@ const val ANSI_RESET_FOREGROUND_COLOR = "${ANSI_ESC}39m"
 const val ANSI_RESET_COLORS = "${ANSI_ESC}0m"
 
 const val ANSI_BOLD_ON = "${ANSI_ESC}1m"
-const val ANSI_BOLD_OFF = "${ANSI_ESC}2m"
+const val ANSI_BOLD_OFF = "${ANSI_ESC}22m"
 
 const val ANSI_UNDERLINE_ON = "${ANSI_ESC}4m"
 const val ANSI_UNDERLINE_OFF = "${ANSI_ESC}24m"
