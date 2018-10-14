@@ -51,7 +51,8 @@ class Database(private val directory: File) {
                     month INTEGER NOT NULL,
                     day INTEGER NOT NULL,
                     hour INTEGER NOT NULL,
-                    minute INTEGER NOT NULL
+                    minute INTEGER NOT NULL,
+                    day_of_week INTEGER NOT NULL
                 )
                 """.trimIndent()
             )
@@ -59,7 +60,7 @@ class Database(private val directory: File) {
     }
 
     private val insertMinute by lazy {
-        connection.prepareStatement("INSERT INTO minute (id, year, month, day, hour, minute) VALUES (?, ?, ?, ?, ?, ?)")
+        connection.prepareStatement("INSERT INTO minute (id, year, month, day, hour, minute, day_of_week) VALUES (?, ?, ?, ?, ?, ?, ?)")
     }
 
     private val selectMinutesWorkedOnDay by lazy {
@@ -68,9 +69,9 @@ class Database(private val directory: File) {
             SELECT count(*)
             FROM minute
             WHERE
-            year=?
-            AND month=?
-            AND day=?
+            year = ?
+            AND month = ?
+            AND day = ?
              """.trimIndent()
         )
     }
@@ -81,44 +82,48 @@ class Database(private val directory: File) {
             SELECT count(*)
             FROM minute
             WHERE
-            year=?
-            AND month=?
+            year = ?
+            AND month = ?
             """.trimIndent()
         )
     }
 
     private val selectMinutesWorkedBetweenDates by lazy {
-        connection.prepareStatement("SELECT count(*) FROM minute WHERE id>=? AND id<?")
+        connection.prepareStatement("SELECT count(*) FROM minute WHERE id >= ? AND id < ?")
     }
 
     private val selectFirstLog by lazy {
         connection.prepareStatement("SELECT year, month, day, hour, minute FROM minute ORDER BY id")
     }
 
-    private val selectFirstLogOfDay by lazy {
+    private val selectFirstLogAfter by lazy {
         connection.prepareStatement(
             """
             SELECT year, month, day, hour, minute
             FROM minute
             WHERE
-            year=?
-            AND month=?
-            AND day=?
+            year = ?
+            AND month = ?
+            AND day = ?
+            AND ((hour = ? AND minute >= ?) OR (hour > ?))
             ORDER BY id
+            LIMIT 1
             """.trimIndent()
         )
     }
 
-    private val selectLastLogOfDay by lazy {
+    private val selectLastLogBefore by lazy {
         connection.prepareStatement(
             """
             SELECT year, month, day, hour, minute
             FROM minute
             WHERE
-            year=?
-            AND month=?
-            AND day=?
+            year = ?
+            AND month = ?
+            AND day = ?
+            AND ((hour = ? AND minute <= ?) OR (hour < ?))
             ORDER BY id DESC
+            LIMIT 1
             """.trimIndent()
         )
     }
@@ -190,6 +195,7 @@ class Database(private val directory: File) {
             setInt(4, cal[Calendar.DAY_OF_MONTH])
             setInt(5, cal[Calendar.HOUR_OF_DAY])
             setInt(6, cal[Calendar.MINUTE])
+            setInt(7, cal[Calendar.DAY_OF_WEEK])
         }.execute()
     }
 
@@ -249,20 +255,50 @@ class Database(private val directory: File) {
         return selectAverageMinutesPerDay.executeQuery().getInt(1)
     }
 
-    fun firstLogOfDay(cal: Calendar): Date? {
-        val resultSet = selectFirstLogOfDay.apply {
+    fun firstLogOfMorning(cal: Calendar, atLeastHour: Int, atLeastMinute: Int): Date? {
+        val resultSet = selectFirstLogAfter.apply {
             setInt(1, cal[Calendar.YEAR])
             setInt(2, cal[Calendar.MONTH] + 1)
             setInt(3, cal[Calendar.DAY_OF_MONTH])
+            setInt(4, atLeastHour)
+            setInt(5, atLeastMinute)
+            setInt(6, atLeastHour)
         }.executeQuery()
         return dateFromResultSet(resultSet)
     }
 
-    fun lastLogOfDay(cal: Calendar): Date? {
-        val resultSet = selectLastLogOfDay.apply {
+    fun lastLogOfMorning(cal: Calendar, atMostHour: Int, atMostMinute: Int): Date? {
+        val resultSet = selectLastLogBefore.apply {
             setInt(1, cal[Calendar.YEAR])
             setInt(2, cal[Calendar.MONTH] + 1)
             setInt(3, cal[Calendar.DAY_OF_MONTH])
+            setInt(4, atMostHour)
+            setInt(5, atMostMinute)
+            setInt(6, atMostHour)
+        }.executeQuery()
+        return dateFromResultSet(resultSet)
+    }
+
+    fun firstLogOfEvening(cal: Calendar, atLeastHour: Int, atLeastMinute: Int): Date? {
+        val resultSet = selectFirstLogAfter.apply {
+            setInt(1, cal[Calendar.YEAR])
+            setInt(2, cal[Calendar.MONTH] + 1)
+            setInt(3, cal[Calendar.DAY_OF_MONTH])
+            setInt(4, atLeastHour)
+            setInt(5, atLeastMinute)
+            setInt(6, atLeastHour)
+        }.executeQuery()
+        return dateFromResultSet(resultSet)
+    }
+
+    fun lastLogOfEvening(cal: Calendar, atMostHour: Int, atMostMinute: Int): Date? {
+        val resultSet = selectLastLogBefore.apply {
+            setInt(1, cal[Calendar.YEAR])
+            setInt(2, cal[Calendar.MONTH] + 1)
+            setInt(3, cal[Calendar.DAY_OF_MONTH])
+            setInt(4, atMostHour)
+            setInt(5, atMostMinute)
+            setInt(6, atMostHour)
         }.executeQuery()
         return dateFromResultSet(resultSet)
     }
@@ -272,7 +308,7 @@ class Database(private val directory: File) {
         val res = Calendar.getInstance()
         res[Calendar.YEAR] = resultSet.getInt(1)
         res[Calendar.MONTH] = resultSet.getInt(2) - 1
-        res[Calendar.DAY_OF_WEEK] = resultSet.getInt(3)
+        res[Calendar.DAY_OF_MONTH] = resultSet.getInt(3)
         res[Calendar.HOUR_OF_DAY] = resultSet.getInt(4)
         res[Calendar.MINUTE] = resultSet.getInt(5)
         res[Calendar.SECOND] = 0

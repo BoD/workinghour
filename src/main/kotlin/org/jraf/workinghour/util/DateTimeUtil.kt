@@ -25,9 +25,12 @@
 
 package org.jraf.workinghour.util
 
+import org.apache.commons.lang3.StringUtils
+import org.apache.commons.lang3.time.DurationFormatUtils
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
+import java.util.concurrent.TimeUnit
 
 private val HOUR_MINUTE_FORMAT = SimpleDateFormat("H:mm")
 private val DAY_FORMAT = SimpleDateFormat("MMMM d yyyy")
@@ -35,14 +38,47 @@ private val WEEK_DAY_FORMAT = SimpleDateFormat("EEEE")
 
 fun workingDayAgo(nbDaysAgo: Int): Calendar {
     val cal = Calendar.getInstance()
-    cal.add(Calendar.DAY_OF_MONTH, -nbDaysAgo)
-    // Rewind again if it is now the weekend
+    for (i in 0..nbDaysAgo) {
+        cal.add(Calendar.DAY_OF_MONTH, -1)
+        // Rewind until it is not the weekend
+        while (cal[Calendar.DAY_OF_WEEK] == Calendar.SATURDAY || cal[Calendar.DAY_OF_WEEK] == Calendar.SUNDAY) {
+            cal.add(Calendar.DAY_OF_MONTH, -1)
+        }
+    }
+    return cal
+}
+
+fun workingDaysAgo(nbWeekAgo: Int): List<Calendar> {
+    val cal = Calendar.getInstance()
+    // Rewind until it is not the weekend
     while (cal[Calendar.DAY_OF_WEEK] == Calendar.SATURDAY || cal[Calendar.DAY_OF_WEEK] == Calendar.SUNDAY) {
         cal.add(Calendar.DAY_OF_MONTH, -1)
     }
-    return cal
+    cal.add(Calendar.WEEK_OF_MONTH, -nbWeekAgo)
+    cal[Calendar.DAY_OF_WEEK] = Calendar.FRIDAY
+    val res = mutableListOf<Calendar>()
+    for (i in 1..5) {
+        res += cal.clone() as Calendar
+        cal.add(Calendar.DAY_OF_MONTH, -1)
+    }
+    return res
 }
 
 fun Date.formatHourMinute(): String = HOUR_MINUTE_FORMAT.format(this)
 fun Date.formatDay(): String = DAY_FORMAT.format(this)
 fun Date.formatWeekDay(): String = WEEK_DAY_FORMAT.format(this)
+
+fun formatDuration(minutes: Number): String {
+    return StringUtils.rightPad(
+        DurationFormatUtils.formatDuration(TimeUnit.MINUTES.toMillis(minutes.toLong()), "H'h'm'm'")
+            .replace("h0m", "h")
+            .replace(Regex("^0h(.+)"), "$1")
+        , 6
+    )
+
+}
+
+infix operator fun Date?.minus(date: Date?): Long {
+    if (this == null || date == null) return 0L
+    return TimeUnit.MILLISECONDS.toMinutes(time - date.time)
+}

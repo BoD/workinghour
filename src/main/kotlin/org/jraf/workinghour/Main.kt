@@ -26,22 +26,25 @@
 package org.jraf.workinghour
 
 import com.beust.jcommander.JCommander
+import org.apache.commons.lang3.StringUtils
 import org.jraf.workinghour.util.ANSI_CLEAR_SCREEN
 import org.jraf.workinghour.util.blue
 import org.jraf.workinghour.util.bold
+import org.jraf.workinghour.util.darkGrey
 import org.jraf.workinghour.util.formatDay
 import org.jraf.workinghour.util.formatDuration
 import org.jraf.workinghour.util.formatHourMinute
 import org.jraf.workinghour.util.formatWeekDay
+import org.jraf.workinghour.util.minus
 import org.jraf.workinghour.util.purple
 import org.jraf.workinghour.util.underline
 import org.jraf.workinghour.util.workingDayAgo
+import org.jraf.workinghour.util.workingDaysAgo
 import org.jraf.workinghour.util.yellow
 import java.awt.MouseInfo
 import java.awt.Point
 import java.io.File
 import java.io.PrintStream
-import java.util.Calendar
 import java.util.Date
 import java.util.concurrent.TimeUnit
 
@@ -99,95 +102,79 @@ class Main {
     private fun printStats(out: PrintStream, ansiSupported: Boolean) {
         if (ansiSupported) out.print(ANSI_CLEAR_SCREEN)
 
-        // Today
-        val now = Calendar.getInstance()
-        var firstLog = database.firstLogOfDay(now)
-        out.println(yellow("Today: ", ansiSupported) + formatDuration(database.minutesWorkedOnDay(now)) + arrivedAtLeftAt(firstLog, null, ansiSupported))
-
-        // Yesterday
-        val yesterday = workingDayAgo(1)
-        firstLog = database.firstLogOfDay(yesterday)
-        var lastLog = database.lastLogOfDay(yesterday)
-        out.println(
-            yellow("Yesterday: ", ansiSupported) + formatDuration(database.minutesWorkedOnDay(yesterday)) + arrivedAtLeftAt(
-                firstLog,
-                lastLog,
-                ansiSupported
+        for (i in 0..7) {
+            val dayAgo = workingDayAgo(i)
+            val firstLogOfMorning = database.firstLogOfMorning(dayAgo, MORNING_MIN_HOUR, MORNING_MIN_MINUTE)
+            val lastLogOfMorning = database.lastLogOfMorning(dayAgo, MORNING_MAX_HOUR, MORNING_MAX_MINUTE)
+            val firstLogOfEvening = database.firstLogOfEvening(dayAgo, EVENING_MIN_HOUR, EVENING_MIN_MINUTE)
+            val lastLogOfEvening = database.lastLogOfEvening(dayAgo, EVENING_MAX_HOUR, EVENING_MAX_MINUTE)
+            val minutes = (lastLogOfMorning - firstLogOfMorning) + (lastLogOfEvening - firstLogOfEvening)
+            out.println(
+                yellow(StringUtils.rightPad(dayAgo.time.formatWeekDay() + ": ", 11), ansiSupported) +
+                        formatDuration(minutes) +
+                        arrivedAtLeftAt(
+                            firstLogOfMorning,
+                            lastLogOfMorning,
+                            firstLogOfEvening,
+                            lastLogOfEvening,
+                            ansiSupported
+                        )
             )
-        )
+        }
+        out.println()
 
-        // 2 days ago
-        val dayAgo2 = workingDayAgo(2)
-        firstLog = database.firstLogOfDay(dayAgo2)
-        lastLog = database.lastLogOfDay(dayAgo2)
-        out.println(
-            yellow(dayAgo2.time.formatWeekDay() + ": ", ansiSupported) + formatDuration(database.minutesWorkedOnDay(dayAgo2)) + arrivedAtLeftAt(
-                firstLog, lastLog,
-                ansiSupported
+        for (i in 0..4) {
+            val daysAgo = workingDaysAgo(i)
+            var totalMinutes = 0L
+            for (dayAgo in daysAgo) {
+                val firstLogOfMorning = database.firstLogOfMorning(dayAgo, MORNING_MIN_HOUR, MORNING_MIN_MINUTE)
+                val lastLogOfMorning = database.lastLogOfMorning(dayAgo, MORNING_MAX_HOUR, MORNING_MAX_MINUTE)
+                val firstLogOfEvening = database.firstLogOfEvening(dayAgo, EVENING_MIN_HOUR, EVENING_MIN_MINUTE)
+                val lastLogOfEvening = database.lastLogOfEvening(dayAgo, EVENING_MAX_HOUR, EVENING_MAX_MINUTE)
+                val minutes = (lastLogOfMorning - firstLogOfMorning) + (lastLogOfEvening - firstLogOfEvening)
+                totalMinutes += minutes
+            }
+            out.println(
+                yellow(
+                    StringUtils.rightPad(
+                        when (i) {
+                            0 -> "This week: "
+                            1 -> "Last week: "
+                            else -> "$i weeks ago: "
+                        }, 13
+                    ), ansiSupported
+                ) + formatDuration(totalMinutes)
             )
-        )
-
-        // 3 days ago
-        val dayAgo3 = workingDayAgo(3)
-        firstLog = database.firstLogOfDay(dayAgo3)
-        lastLog = database.lastLogOfDay(dayAgo3)
-        out.println(
-            yellow(dayAgo3.time.formatWeekDay() + ": ", ansiSupported) + formatDuration(database.minutesWorkedOnDay(dayAgo3)) + arrivedAtLeftAt(
-                firstLog, lastLog,
-                ansiSupported
-            )
-        )
-
-        // 4 days ago
-        val dayAgo4 = workingDayAgo(4)
-        firstLog = database.firstLogOfDay(dayAgo4)
-        lastLog = database.lastLogOfDay(dayAgo4)
-        out.println(
-            yellow(dayAgo4.time.formatWeekDay() + ": ", ansiSupported) + formatDuration(database.minutesWorkedOnDay(dayAgo4)) + arrivedAtLeftAt(
-                firstLog, lastLog,
-                ansiSupported
-            )
-        )
+        }
 
         out.println()
 
-        // This week
-        out.println(
-            yellow("This week: ", ansiSupported) + formatDuration(database.minutesWorkedOnWeek(now))
-        )
+        var i = 0
+        var nbDays = 0
+        var totalMinutes = 0L
+        val firstLog = database.firstLog()
+        while (true) {
+            val dayAgo = workingDayAgo(i)
+            if (dayAgo.time.before(firstLog)) break
+            val firstLogOfMorning = database.firstLogOfMorning(dayAgo, MORNING_MIN_HOUR, MORNING_MIN_MINUTE)
+            val lastLogOfMorning = database.lastLogOfMorning(dayAgo, MORNING_MAX_HOUR, MORNING_MAX_MINUTE)
+            val firstLogOfEvening = database.firstLogOfEvening(dayAgo, EVENING_MIN_HOUR, EVENING_MIN_MINUTE)
+            val lastLogOfEvening = database.lastLogOfEvening(dayAgo, EVENING_MAX_HOUR, EVENING_MAX_MINUTE)
+            val minutes = (lastLogOfMorning - firstLogOfMorning) + (lastLogOfEvening - firstLogOfEvening)
+            // Discard anomalous days, and days off
+            if (minutes >= TimeUnit.HOURS.toMinutes(7)) {
+                totalMinutes += minutes
+                nbDays++
+            }
+            i++
+        }
 
-        // Last week
-        val lastWeek = Calendar.getInstance().apply { add(Calendar.WEEK_OF_YEAR, -1) }
-        out.println(
-            yellow("Last week: ", ansiSupported) + formatDuration(database.minutesWorkedOnWeek(lastWeek))
-        )
-
-        // 2 weeks ago
-        val weekAgo2 = Calendar.getInstance().apply { add(Calendar.WEEK_OF_YEAR, -2) }
-        out.println(
-            yellow("2 weeks ago: ", ansiSupported) + formatDuration(database.minutesWorkedOnWeek(weekAgo2))
-        )
-
-        // 3 weeks ago
-        val weekAgo3 = Calendar.getInstance().apply { add(Calendar.WEEK_OF_YEAR, -3) }
-        out.println(
-            yellow("3 weeks ago: ", ansiSupported) + formatDuration(database.minutesWorkedOnWeek(weekAgo3))
-        )
-
-        // 4 weeks ago
-        val weekAgo4 = Calendar.getInstance().apply { add(Calendar.WEEK_OF_YEAR, -4) }
-        out.println(
-            yellow("4 weeks ago: ", ansiSupported) + formatDuration(database.minutesWorkedOnWeek(weekAgo4))
-        )
-
-        out.println()
-
-        val averageMinutesPerDay = database.averageMinutesPerDay()
+        val averageMinutesPerDay = totalMinutes.toFloat() / nbDays
         out.println(
             yellow(underline(bold("Average", ansiSupported), ansiSupported) + ": ", ansiSupported) + bold(
                 formatDuration(averageMinutesPerDay) + "/day",
                 ansiSupported
-            ) + " (${formatDuration(averageMinutesPerDay * 5)}/week) since ${database.firstLog().formatDay()}"
+            ) + " (${formatDuration(averageMinutesPerDay * 5)}/week) since ${firstLog.formatDay()}"
         )
     }
 
@@ -195,18 +182,50 @@ class Main {
         private const val PROGRAM_NAME = "workinghour"
         private const val STATS_FILE_NAME = "workinghour.stats.txt"
 
+        private const val MORNING_MIN_HOUR = 8
+        private const val MORNING_MIN_MINUTE = 45
+
+        private const val MORNING_MAX_HOUR = 13
+        private const val MORNING_MAX_MINUTE = 0
+
+        private const val EVENING_MIN_HOUR = 13
+        private const val EVENING_MIN_MINUTE = 0
+
+        private const val EVENING_MAX_HOUR = 21
+        private const val EVENING_MAX_MINUTE = 0
+
         @Suppress("NOTHING_TO_INLINE")
-        private inline fun arrivedAtLeftAt(firstLog: Date?, lastLog: Date?, ansiSupported: Boolean): String {
+        private inline fun arrivedAtLeftAt(
+            firstLogOfMorning: Date?,
+            lastLogOfMorning: Date?,
+            firstLogOfEvening: Date?,
+            lastLogOfEvening: Date?,
+            ansiSupported: Boolean
+        ): String {
             return (
-                    if (firstLog != null) " ${purple(
-                        "↓" + firstLog.formatHourMinute(),
+                    if (firstLogOfMorning != null) "  ${purple(
+                        firstLogOfMorning.formatHourMinute() + "  ",
                         ansiSupported
                     )}" else ""
                     ) +
-                    if (lastLog != null) " ${blue(
-                        "↑" + lastLog.formatHourMinute(),
-                        ansiSupported
-                    )}" else ""
+                    (
+                            if (lastLogOfMorning != null) darkGrey(
+                                lastLogOfMorning.formatHourMinute(),
+                                ansiSupported
+                            ) else ""
+                            ) +
+                    (
+                            if (firstLogOfEvening != null) "  ${darkGrey(
+                                firstLogOfEvening.formatHourMinute() + "  ",
+                                ansiSupported
+                            )}" else ""
+                            ) +
+                    (
+                            if (lastLogOfEvening != null) blue(
+                                lastLogOfEvening.formatHourMinute(),
+                                ansiSupported
+                            ) else ""
+                            )
         }
     }
 }

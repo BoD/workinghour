@@ -50,15 +50,6 @@ const val ANSI_PURPLE = "${ANSI_ESC}35m"
 const val ANSI_CYAN = "${ANSI_ESC}36m"
 const val ANSI_WHITE = "${ANSI_ESC}37m"
 
-const val ANSI_BLACK_BOLD = "${ANSI_ESC}1;30m"
-const val ANSI_RED_BOLD = "${ANSI_ESC}1;31m"
-const val ANSI_GREEN_BOLD = "${ANSI_ESC}1;32m"
-const val ANSI_YELLOW_BOLD = "${ANSI_ESC}1;33m"
-const val ANSI_BLUE_BOLD = "${ANSI_ESC}1;34m"
-const val ANSI_PURPLE_BOLD = "${ANSI_ESC}1;35m"
-const val ANSI_CYAN_BOLD = "${ANSI_ESC}1;36m"
-const val ANSI_WHITE_BOLD = "${ANSI_ESC}1;37m"
-
 // Calculate the nearest 0-based color index at 16 .. 231
 private fun v2ci(v: Int) = if (v < 48) 0 else if (v < 115) 1 else (v - 35) / 40
 
@@ -67,7 +58,7 @@ private fun colorIndex(ir: Int, ig: Int, ib: Int) = (36 * ir + 6 * ig + ib)
 
 private fun distSquare(A: Int, B: Int, C: Int, a: Int, b: Int, c: Int) = (A - a) * (A - a) + (B - b) * (B - b) + (C - c) * (C - c)
 
-fun rgbToAnsi256(r: Int, g: Int, b: Int): Int {
+private fun rgbToAnsi256(r: Int, g: Int, b: Int): Int {
     // 0..5 each
     val ir = v2ci(r)
     val ig = v2ci(g)
@@ -91,8 +82,10 @@ fun rgbToAnsi256(r: Int, g: Int, b: Int): Int {
 }
 
 fun Color.toAnsi256Foreground() = "${ANSI_ESC}38;5;${rgbToAnsi256(red, green, blue)}m"
-
 fun Color.toAnsi256Background() = "${ANSI_ESC}48;5;${rgbToAnsi256(red, green, blue)}m"
+
+fun foreground256(red: Int, green: Int, blue: Int) = Color(red, green, blue).toAnsi256Foreground()
+fun background256(red: Int, green: Int, blue: Int) = Color(red, green, blue).toAnsi256Background()
 
 inline fun bold(s: String, ansiSupported: Boolean) = if (ansiSupported) "$ANSI_BOLD_ON$s$ANSI_BOLD_OFF" else s
 inline fun underline(s: String, ansiSupported: Boolean) = if (ansiSupported) "$ANSI_UNDERLINE_ON$s$ANSI_UNDERLINE_OFF" else s
@@ -100,3 +93,4 @@ inline fun underline(s: String, ansiSupported: Boolean) = if (ansiSupported) "$A
 inline fun yellow(s: String, ansiSupported: Boolean) = if (ansiSupported) "$ANSI_YELLOW$s$ANSI_RESET_COLORS" else s
 inline fun purple(s: String, ansiSupported: Boolean) = if (ansiSupported) "$ANSI_PURPLE$s$ANSI_RESET_COLORS" else s
 inline fun blue(s: String, ansiSupported: Boolean) = if (ansiSupported) "$ANSI_BLUE$s$ANSI_RESET_COLORS" else s
+inline fun darkGrey(s: String, ansiSupported: Boolean) = if (ansiSupported) "${foreground256(50, 50, 50)}$s$ANSI_RESET_COLORS" else s
