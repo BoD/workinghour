@@ -38,7 +38,7 @@ private val WEEK_DAY_FORMAT = SimpleDateFormat("EEEE")
 
 fun workingDayAgo(nbDaysAgo: Int): Calendar {
     val cal = Calendar.getInstance()
-    for (i in 0..nbDaysAgo) {
+    for (i in 0 until nbDaysAgo) {
         cal.add(Calendar.DAY_OF_MONTH, -1)
         // Rewind until it is not the weekend
         while (cal[Calendar.DAY_OF_WEEK] == Calendar.SATURDAY || cal[Calendar.DAY_OF_WEEK] == Calendar.SUNDAY) {
