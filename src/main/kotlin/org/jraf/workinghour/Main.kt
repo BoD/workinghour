@@ -47,6 +47,7 @@ import java.io.File
 import java.io.PrintStream
 import java.util.Date
 import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
 
 class Main {
     private var latestMouseLocation: Point? = null
@@ -81,9 +82,19 @@ class Main {
 //    database.logTestData()
 
         println("Logging to ${arguments.path}")
+
+        // Log activity, every minute
+        thread {
+            while (true) {
+                logIfActivityDetected()
+                Thread.sleep(TimeUnit.MINUTES.toMillis(1))
+            }
+        }
+
+        // Print stats, every 5 minutes
         while (true) {
-            logIfActivityDetected()
-            Thread.sleep(TimeUnit.MINUTES.toMillis(1))
+            printStats()
+            Thread.sleep(TimeUnit.MINUTES.toMillis(5))
         }
     }
 
@@ -92,10 +103,13 @@ class Main {
         if (latestMouseLocation != newMouseLocation) {
             latestMouseLocation = newMouseLocation
             database.logMinute()
-            printStats(System.out, true)
-            PrintStream(statsFile).use {
-                printStats(it, false)
-            }
+        }
+    }
+
+    private fun printStats() {
+        printStats(System.out, true)
+        PrintStream(statsFile).use {
+            printStats(it, false)
         }
     }
 
