@@ -31,10 +31,13 @@ import org.jraf.workinghour.util.ANSI_CLEAR_SCREEN
 import org.jraf.workinghour.util.blue
 import org.jraf.workinghour.util.bold
 import org.jraf.workinghour.util.darkGrey
+import org.jraf.workinghour.util.dayAgo
 import org.jraf.workinghour.util.formatDay
 import org.jraf.workinghour.util.formatDuration
 import org.jraf.workinghour.util.formatHourMinute
 import org.jraf.workinghour.util.formatWeekDay
+import org.jraf.workinghour.util.green
+import org.jraf.workinghour.util.isWeekend
 import org.jraf.workinghour.util.minus
 import org.jraf.workinghour.util.purple
 import org.jraf.workinghour.util.underline
@@ -45,6 +48,7 @@ import java.awt.MouseInfo
 import java.awt.Point
 import java.io.File
 import java.io.PrintStream
+import java.util.Calendar
 import java.util.Date
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
@@ -88,6 +92,7 @@ class Main {
             while (true) {
                 logIfActivityDetected()
                 Thread.sleep(TimeUnit.MINUTES.toMillis(1))
+                print(green(".", true))
             }
         }
 
@@ -160,36 +165,63 @@ class Main {
                 ) + formatDuration(totalMinutes)
             )
         }
-
         out.println()
+
+        out.print(yellow(underline(bold("Average", ansiSupported), ansiSupported) + ": ", ansiSupported))
 
         var i = 0
         var nbDays = 0
         var totalMinutes = 0L
-        val firstLog = database.firstLog()
+        val oneYearAgo = Calendar.getInstance().apply { add(Calendar.YEAR, -1) }.time
+        val skip = 1
+        var iterations = 0
         while (true) {
-            val dayAgo = workingDayAgo(i)
-            if (dayAgo.time.before(firstLog)) break
+            iterations++
+            val dayAgo = dayAgo(i)
+            if (dayAgo.time.before(oneYearAgo)) break
+
+            // Skip weekends
+            if (dayAgo.isWeekend) {
+                i += skip
+                continue
+            }
+
             val firstLogOfMorning = database.firstLogOfMorning(dayAgo, MORNING_MIN_HOUR, MORNING_MIN_MINUTE)
+            // Skip days off
+            if (firstLogOfMorning == null) {
+                i += skip
+                continue
+            }
             val lastLogOfMorning = database.lastLogOfMorning(dayAgo, MORNING_MAX_HOUR, MORNING_MAX_MINUTE)
             val firstLogOfEvening = database.firstLogOfEvening(dayAgo, EVENING_MIN_HOUR, EVENING_MIN_MINUTE)
             val lastLogOfEvening = database.lastLogOfEvening(dayAgo, EVENING_MAX_HOUR, EVENING_MAX_MINUTE)
             val minutes = (lastLogOfMorning - firstLogOfMorning) + (lastLogOfEvening - firstLogOfEvening)
             // Discard anomalous days, and days off
-            if (minutes >= TimeUnit.HOURS.toMinutes(7)) {
-                totalMinutes += minutes
-                nbDays++
+            if (minutes < MIN_VALID_WORK_DAY_HOURS) {
+                i += skip
+                continue
             }
-            i++
+            totalMinutes += minutes
+            nbDays++
+            i += skip
         }
 
         val averageMinutesPerDay = totalMinutes.toFloat() / nbDays
         out.println(
-            yellow(underline(bold("Average", ansiSupported), ansiSupported) + ": ", ansiSupported) + bold(
+            bold(
                 formatDuration(averageMinutesPerDay) + "/day",
                 ansiSupported
-            ) + " (${formatDuration(averageMinutesPerDay * 5)}/week) since ${firstLog.formatDay()}"
+            ) + " (${formatDuration(averageMinutesPerDay * 5)}/week) since ${oneYearAgo.formatDay()} ($nbDays working days)"
         )
+
+        out.println()
+    }
+
+    private fun <T> logTime(tag: String, block: () -> T): T {
+        val start = System.currentTimeMillis()
+        val res = block()
+        println("$tag took ${System.currentTimeMillis() - start} ms")
+        return res
     }
 
     companion object {
@@ -207,6 +239,8 @@ class Main {
 
         private const val EVENING_MAX_HOUR = 21
         private const val EVENING_MAX_MINUTE = 0
+
+        private val MIN_VALID_WORK_DAY_HOURS = TimeUnit.HOURS.toMinutes(7)
 
         @Suppress("NOTHING_TO_INLINE")
         private inline fun arrivedAtLeftAt(

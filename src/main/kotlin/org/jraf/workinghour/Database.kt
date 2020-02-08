@@ -142,15 +142,36 @@ class Database(private val directory: File) {
         )
     }
 
+    private val selectTotalRows by lazy {
+        connection.prepareStatement(
+            """
+            SELECT count(*)
+            FROM minute
+            """.trimIndent()
+        )
+    }
+
+    private val selectTotalDays by lazy {
+        connection.prepareStatement(
+            """
+            SELECT count(*)
+            FROM
+            (SELECT DISTINCT year, month, day FROM minute)
+            """.trimIndent()
+        )
+    }
+
 
     @Suppress("NOTHING_TO_INLINE")
     private inline fun getIdForCalendar(cal: Calendar) = ID_DATE_FORMAT.format(cal.time).toLong()
 
+    @Synchronized
     fun logMinute() {
         val now = Calendar.getInstance()
         logMinute(now)
     }
 
+    @Synchronized
     fun logTestData() {
         val cal = Calendar.getInstance()
         cal.add(Calendar.DAY_OF_MONTH, -60)
@@ -187,6 +208,7 @@ class Database(private val directory: File) {
         }
     }
 
+    @Synchronized
     private fun logMinute(cal: Calendar) {
         insertMinute.apply {
             setLong(1, getIdForCalendar(cal))
@@ -199,6 +221,7 @@ class Database(private val directory: File) {
         }.execute()
     }
 
+    @Synchronized
     fun minutesWorkedOnDay(cal: Calendar): Int {
         return selectMinutesWorkedOnDay.apply {
             setInt(1, cal[Calendar.YEAR])
@@ -207,6 +230,7 @@ class Database(private val directory: File) {
         }.executeQuery().getInt(1)
     }
 
+    @Synchronized
     fun minutesWorkedThisMonth(): Int {
         val now = Calendar.getInstance()
         return selectMinutesWorkedThisMonth.apply {
@@ -215,6 +239,7 @@ class Database(private val directory: File) {
         }.executeQuery().getInt(1)
     }
 
+    @Synchronized
     fun minutesWorkedLast30Days(): Int {
         val cal = Calendar.getInstance()
         cal.add(Calendar.DAY_OF_MONTH, -30)
@@ -226,6 +251,7 @@ class Database(private val directory: File) {
         }.executeQuery().getInt(1)
     }
 
+    @Synchronized
     fun minutesWorkedOnWeek(dayInWeek: Calendar): Int {
         val from = dayInWeek.clone() as Calendar
         from[Calendar.DAY_OF_WEEK] = Calendar.MONDAY
@@ -239,6 +265,7 @@ class Database(private val directory: File) {
         }.executeQuery().getInt(1)
     }
 
+    @Synchronized
     fun minutesWorkedTotal(): Int {
         return selectMinutesWorkedBetweenDates.apply {
             setInt(1, 0)
@@ -246,15 +273,18 @@ class Database(private val directory: File) {
         }.executeQuery().getInt(1)
     }
 
+    @Synchronized
     fun firstLog(): Date {
         val resultSet = selectFirstLog.executeQuery()
         return dateFromResultSet(resultSet)!!
     }
 
+    @Synchronized
     fun averageMinutesPerDay(): Int {
         return selectAverageMinutesPerDay.executeQuery().getInt(1)
     }
 
+    @Synchronized
     fun firstLogOfMorning(cal: Calendar, atLeastHour: Int, atLeastMinute: Int): Date? {
         val resultSet = selectFirstLogAfter.apply {
             setInt(1, cal[Calendar.YEAR])
@@ -267,6 +297,7 @@ class Database(private val directory: File) {
         return dateFromResultSet(resultSet)
     }
 
+    @Synchronized
     fun lastLogOfMorning(cal: Calendar, atMostHour: Int, atMostMinute: Int): Date? {
         val resultSet = selectLastLogBefore.apply {
             setInt(1, cal[Calendar.YEAR])
@@ -279,6 +310,7 @@ class Database(private val directory: File) {
         return dateFromResultSet(resultSet)
     }
 
+    @Synchronized
     fun firstLogOfEvening(cal: Calendar, atLeastHour: Int, atLeastMinute: Int): Date? {
         val resultSet = selectFirstLogAfter.apply {
             setInt(1, cal[Calendar.YEAR])
@@ -291,6 +323,7 @@ class Database(private val directory: File) {
         return dateFromResultSet(resultSet)
     }
 
+    @Synchronized
     fun lastLogOfEvening(cal: Calendar, atMostHour: Int, atMostMinute: Int): Date? {
         val resultSet = selectLastLogBefore.apply {
             setInt(1, cal[Calendar.YEAR])
@@ -301,6 +334,16 @@ class Database(private val directory: File) {
             setInt(6, atMostHour)
         }.executeQuery()
         return dateFromResultSet(resultSet)
+    }
+
+    @Synchronized
+    fun totalRows(): Long {
+        return selectTotalRows.executeQuery().getLong(1)
+    }
+
+    @Synchronized
+    fun totalDays(): Long {
+        return selectTotalDays.executeQuery().getLong(1)
     }
 
     private fun dateFromResultSet(resultSet: ResultSet): Date? {

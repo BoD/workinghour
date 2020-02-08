@@ -93,4 +93,5 @@ inline fun underline(s: String, ansiSupported: Boolean) = if (ansiSupported) "$A
 inline fun yellow(s: String, ansiSupported: Boolean) = if (ansiSupported) "$ANSI_YELLOW$s$ANSI_RESET_COLORS" else s
 inline fun purple(s: String, ansiSupported: Boolean) = if (ansiSupported) "$ANSI_PURPLE$s$ANSI_RESET_COLORS" else s
 inline fun blue(s: String, ansiSupported: Boolean) = if (ansiSupported) "$ANSI_BLUE$s$ANSI_RESET_COLORS" else s
+inline fun green(s: String, ansiSupported: Boolean) = if (ansiSupported) "$ANSI_GREEN$s$ANSI_RESET_COLORS" else s
 inline fun darkGrey(s: String, ansiSupported: Boolean) = if (ansiSupported) "${foreground256(50, 50, 50)}$s$ANSI_RESET_COLORS" else s

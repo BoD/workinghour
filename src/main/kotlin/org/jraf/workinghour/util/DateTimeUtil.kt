@@ -48,6 +48,14 @@ fun workingDayAgo(nbDaysAgo: Int): Calendar {
     return cal
 }
 
+fun dayAgo(nbDaysAgo: Int): Calendar {
+    val cal = Calendar.getInstance()
+    cal.add(Calendar.DAY_OF_MONTH, -nbDaysAgo)
+    return cal
+}
+
+val Calendar.isWeekend get() = this[Calendar.DAY_OF_WEEK] == Calendar.SATURDAY || this[Calendar.DAY_OF_WEEK] == Calendar.SUNDAY
+
 fun workingDaysAgo(nbWeekAgo: Int): List<Calendar> {
     val cal = Calendar.getInstance()
     // Rewind until it is not the weekend
