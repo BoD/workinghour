@@ -23,50 +23,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.jraf.workinghour.datetime
+package org.jraf.workinghour.util.jdbc
 
-import java.util.Calendar
+import java.sql.PreparedStatement
 
-data class CalendarDate(
-    val year: Year,
-    val month: Month,
-    val day: DayOfMonth
-) {
-    init {
-        if (!day.isValid) throw IllegalArgumentException("Invalid day of month")
+fun PreparedStatement.intParams(vararg params: Int): PreparedStatement {
+    for ((i, param) in params.withIndex()) {
+        setInt(i + 1, param)
     }
-
-    companion object {
-        fun now(): CalendarDate {
-            val nowCalendar = Calendar.getInstance()
-            return CalendarDate(
-                year = Year(nowCalendar[Calendar.YEAR]),
-                month = Month.values()[nowCalendar[Calendar.MONTH]],
-                day = DayOfMonth(nowCalendar[Calendar.DAY_OF_MONTH])
-            )
-        }
-    }
-}
-
-inline class Year(val year: Int)
-
-enum class Month {
-    JANUARY,
-    FEBRUARY,
-    MARCH,
-    APRIL,
-    MAY,
-    JUNE,
-    JULY,
-    AUGUST,
-    SEPTEMBER,
-    OCTOBER,
-    NOVEMBER,
-    DECEMBER;
-
-    companion object
-}
-
-inline class DayOfMonth(val dayOfMonth: Int) {
-    val isValid get() = dayOfMonth in 1..31
+    return this
 }

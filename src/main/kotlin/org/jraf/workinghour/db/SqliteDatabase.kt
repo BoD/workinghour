@@ -25,9 +25,19 @@
 
 package org.jraf.workinghour.db
 
+import org.jraf.workinghour.datetime.CalendarDate
 import org.jraf.workinghour.datetime.DateTime
+import org.jraf.workinghour.datetime.DayOfMonth
+import org.jraf.workinghour.datetime.Hour
+import org.jraf.workinghour.datetime.Minutes
+import org.jraf.workinghour.datetime.Month
+import org.jraf.workinghour.datetime.TimeOfDay
+import org.jraf.workinghour.datetime.Year
+import org.jraf.workinghour.util.jdbc.intParams
 import java.io.File
 import java.sql.DriverManager
+import java.sql.PreparedStatement
+import java.sql.ResultSet
 
 class SqliteDatabase(private val databaseFile: File) {
 
@@ -51,26 +61,110 @@ class SqliteDatabase(private val databaseFile: File) {
         connection
     }
 
-    private val insertEventStatement by lazy {
+    private val insertEventStatement: PreparedStatement by lazy {
         connection.prepareStatement("INSERT INTO activity_event (year, month, day, hour, minute, event_type) VALUES (?, ?, ?, ?, ?, ?)")
     }
 
-    @Synchronized
-    fun logEvent(dateTime: DateTime, event: Event) {
-        insertEventStatement.apply {
-            setInt(1, dateTime.date.year.year)
-            setInt(2, dateTime.date.month.ordinal)
-            setInt(3, dateTime.date.day.dayOfMonth)
-            setInt(4, dateTime.timeOfDay.hour.hour)
-            setInt(5, dateTime.timeOfDay.minutes.minutes)
-            setInt(6, event.dbRepresentation)
-        }.execute()
+    private val selectFirstActiveEventForDayStatement: PreparedStatement by lazy {
+        connection.prepareStatement(
+            """
+            SELECT year, month, day, hour, minute, event_type
+            FROM activity_event
+            WHERE
+            year = ?
+            AND month = ?
+            AND day = ?
+            AND event_type = ?
+            ORDER BY id
+            LIMIT 1
+            """.trimIndent()
+        )
     }
 
-    enum class Event(val dbRepresentation: Int) {
-        INACTIVE(0),
-        ACTIVE(1)
+    private val selectLastActiveEventForDayStatement: PreparedStatement by lazy {
+        connection.prepareStatement(
+            """
+            SELECT year, month, day, hour, minute, event_type
+            FROM activity_event
+            WHERE
+            year = ?
+            AND month = ?
+            AND day = ?
+            AND event_type = ?
+            ORDER BY id DESC
+            LIMIT 1
+            """.trimIndent()
+        )
     }
+
+
+    @Synchronized
+    fun logEvent(dateTime: DateTime, eventType: EventType) {
+        insertEventStatement.intParams(
+            dateTime.date.year.year,
+            dateTime.date.month.dbRepresentation,
+            dateTime.date.day.dayOfMonth,
+            dateTime.timeOfDay.hour.hour,
+            dateTime.timeOfDay.minutes.minutes,
+            eventType.dbRepresentation
+        ).execute()
+    }
+
+    fun startOfWorkDay(date: CalendarDate): TimeOfDay? {
+        val resultSet = selectFirstActiveEventForDayStatement.intParams(
+            date.year.year,
+            date.month.dbRepresentation,
+            date.day.dayOfMonth,
+            EventType.ACTIVE.dbRepresentation
+        ).executeQuery()
+        return eventFromResultSet(resultSet)?.dateTime?.timeOfDay
+    }
+
+    fun endOfWorkDay(date: CalendarDate): TimeOfDay? {
+        val resultSet = selectLastActiveEventForDayStatement.intParams(
+            date.year.year,
+            date.month.dbRepresentation,
+            date.day.dayOfMonth,
+            EventType.ACTIVE.dbRepresentation
+        ).executeQuery()
+        return eventFromResultSet(resultSet)?.dateTime?.timeOfDay
+    }
+
+    private fun eventFromResultSet(resultSet: ResultSet): Event? {
+        if (!resultSet.isBeforeFirst) return null
+        return Event(
+            DateTime(
+                CalendarDate(
+                    Year(resultSet.getInt(1)),
+                    Month.fromDbRepresentation(resultSet.getInt(2)),
+                    DayOfMonth(resultSet.getInt(3))
+                ),
+                TimeOfDay(
+                    Hour(resultSet.getInt(4)),
+                    Minutes(resultSet.getInt(5))
+                )
+            ),
+            EventType.fromDbRepresentation(resultSet.getInt(6))
+        )
+    }
+
+    enum class EventType(val dbRepresentation: Int) {
+        INACTIVE(0),
+        ACTIVE(1);
+
+        companion object {
+            fun fromDbRepresentation(dbRepresentation: Int): EventType = when (dbRepresentation) {
+                0 -> INACTIVE
+                1 -> ACTIVE
+                else -> throw IllegalArgumentException("Unknown EventType $dbRepresentation")
+            }
+        }
+    }
+
+    data class Event(
+        val dateTime: DateTime,
+        val eventType: EventType
+    )
 }
 
 private fun DateTime.toId(): Long {
@@ -82,3 +176,8 @@ private fun DateTime.toId(): Long {
         timeOfDay.minutes.minutes
     ).toLong()
 }
+
+private val Month.dbRepresentation: Int
+    get() = ordinal + 1
+
+private fun Month.Companion.fromDbRepresentation(dbRepresentation: Int) = Month.values()[dbRepresentation - 1]

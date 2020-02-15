@@ -37,15 +37,15 @@ class Database(databaseFile: File) {
     private val sqliteDatabase = SqliteDatabase(databaseFile)
 
     fun logActive() {
-        sqliteDatabase.logEvent(DateTime.now(), SqliteDatabase.Event.ACTIVE)
+        sqliteDatabase.logEvent(DateTime.now(), SqliteDatabase.EventType.ACTIVE)
     }
 
     fun logInactive() {
-        sqliteDatabase.logEvent(DateTime.now(), SqliteDatabase.Event.INACTIVE)
+        sqliteDatabase.logEvent(DateTime.now(), SqliteDatabase.EventType.INACTIVE)
     }
 
-    fun startOfWorkDay(date: CalendarDate): TimeOfDay {
-        TODO()
+    fun startOfWorkDay(date: CalendarDate): TimeOfDay? {
+        return sqliteDatabase.startOfWorkDay(date)
     }
 
     fun startOfLunchBreak(date: CalendarDate): TimeOfDay {
@@ -56,8 +56,8 @@ class Database(databaseFile: File) {
         TODO()
     }
 
-    fun endOfWorkDay(date: CalendarDate): TimeOfDay {
-        TODO()
+    fun endOfWorkDay(date: CalendarDate): TimeOfDay? {
+        return sqliteDatabase.endOfWorkDay(date)
     }
 
     fun workDurationForDate(date: CalendarDate): Duration {

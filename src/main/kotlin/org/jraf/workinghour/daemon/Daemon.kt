@@ -30,6 +30,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jraf.workinghour.activitydetection.ActivityDetector
+import org.jraf.workinghour.datetime.CalendarDate
 import org.jraf.workinghour.db.Database
 import java.io.File
 import kotlin.time.Duration
@@ -45,7 +46,7 @@ class Daemon(
         private set
 
     private val activityDetector = ActivityDetector(activityMonitoringPeriod)
-    private val database= Database(databaseFile)
+    private val database = Database(databaseFile)
 
     private var activityLoggingJob: Job? = null
     private var latestActive = true
@@ -77,6 +78,9 @@ class Daemon(
                     }
                 }
                 latestActive = newActive
+
+                val today = CalendarDate.now()
+                println("🛬 ${database.startOfWorkDay(today)}  🛫 ${database.endOfWorkDay(today)}")
 
                 delay(activityMonitoringPeriod.toLongMilliseconds())
             }
