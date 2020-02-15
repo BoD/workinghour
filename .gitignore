@@ -1,0 +1,8 @@
+build
+out
+.gradle
+*.iml
+workinghour.db
+.idea/*
+!.idea/copyright
+!.idea/codeStyles
