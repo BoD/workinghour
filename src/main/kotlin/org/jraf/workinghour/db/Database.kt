@@ -41,8 +41,6 @@ class Database(
     private val sqliteDatabase = SqliteDatabase(configuration.databaseFile)
 
     fun logActive(dateTime: DateTime) {
-        println("logActive $dateTime")
-
         // Ignore weekends
         if (dateTime.date.isWeekend) return
 

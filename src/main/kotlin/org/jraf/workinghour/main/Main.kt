@@ -25,12 +25,16 @@
 
 package org.jraf.workinghour.main
 
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.jraf.workinghour.conf.Configuration
+import org.jraf.workinghour.daemon.Daemon
 import org.jraf.workinghour.datetime.DateTime
-import org.jraf.workinghour.datetime.Hour
-import org.jraf.workinghour.datetime.Minutes
 import org.jraf.workinghour.datetime.Time
 import org.jraf.workinghour.db.Database
+import org.jraf.workinghour.db.legacy.LegacySqliteDatabase
+import org.jraf.workinghour.util.ansi.ANSI_CLEAR_SCREEN
 import org.jraf.workinghour.util.duration.formatHourMinutes
 import java.io.File
 import kotlin.random.Random
@@ -38,43 +42,45 @@ import kotlin.random.nextInt
 import kotlin.time.ExperimentalTime
 import kotlin.time.days
 import kotlin.time.hours
+import kotlin.time.minutes
+
+@ExperimentalTime
+private val configuration by lazy {
+    Configuration(
+        databaseFile = File(
+            "workinghour.db"
+        ),
+        startOfDay = Time.build(8, 30),
+        endOfMorning = Time.build(13, 0),
+        startOfAfternoon = Time.build(13, 0),
+        endOfDay = Time.build(21, 30),
+        validDayMinimumDuration = 6.hours
+    )
+}
 
 @ExperimentalStdlibApi
 @ExperimentalTime
 fun main() {
     println("Hello, World!")
-//    val daemon = Daemon(
-//        configuration = Configuration(
-//            databaseFile = File(
-//                "workinghour.db"
-//            ),
-//            startOfDay = Time(Hour(6), Minutes(0)),
-//            endOfMorning = Time(Hour(13), Minutes(0)),
-//            startOfAfternoon = Time(Hour(13), Minutes(0)),
-//            endOfDay = Time(Hour(23), Minutes(50))
-//        )//,
-////        activityMonitoringPeriod = 1.seconds
-//    ).apply { start() }
-//    Object().let {
-//        synchronized(it) {
-//            it.wait()
-//        }
-//    }
+    val db = Database(configuration)
+    val daemon = Daemon(db).apply { start() }
 
-//    createTestDb()
+    // Display stats every minute
+    GlobalScope.launch {
+        while (true) {
+            displayStats(db)
+            delay(1.minutes.toLongMilliseconds())
+        }
+    }
 
-    val db = Database(
-        Configuration(
-            databaseFile = File(
-                "workinghour.db"
-            ),
-            startOfDay = Time(Hour(6), Minutes(0)),
-            endOfMorning = Time(Hour(13), Minutes(0)),
-            startOfAfternoon = Time(Hour(13), Minutes(0)),
-            endOfDay = Time(Hour(23), Minutes(50)),
-            validDayMinimumDuration = 6.hours
-        )
-    )
+    waitForever()
+}
+
+@ExperimentalStdlibApi
+@ExperimentalTime
+private fun displayStats(db: Database) {
+    // Clear screen
+    print(ANSI_CLEAR_SCREEN)
 
     // Days
     val todayNow = DateTime.todayNow()
@@ -91,13 +97,15 @@ fun main() {
         val workDurationForDate = db.workDurationForDay(firstLogOfDay, lastLogOfMorning, firstLogOfAfternoon, lastLogOfDay)
         println(
             "$formattedWeekDay:"
+                    + "  ${workDurationForDate.formatHourMinutes()}"
                     + "  🛬 ${firstLogOfDay?.toFormattedString()}"
                     + "  🔜 ${lastLogOfMorning?.toFormattedString()}"
                     + "  🔙 ${firstLogOfAfternoon?.toFormattedString()}"
                     + "  🛫 ${lastLogOfDay?.toFormattedString()}"
-                    + "  ${workDurationForDate.formatHourMinutes()}"
         )
     }
+
+    println()
 
     // Weeks
     var day = todayNow.date
@@ -107,6 +115,8 @@ fun main() {
         day -= 7.days
     }
 
+    println()
+
     // Total average
     val startDate = todayNow.date - 365.days
     val averageWorkDurationPerDayResults = db.averageWorkDurationPerDay(startDate = startDate, endDate = todayNow.date)
@@ -115,25 +125,27 @@ fun main() {
     val numberOfWorkingDays = averageWorkDurationPerDayResults.numberOfWorkingDays
     val earliestDay = averageWorkDurationPerDayResults.earliestDay
     println(
-        "Total average:  ${averageWorkDurationPerDay.formatHourMinutes()}/day (${averageWorkDurationPerWeek.formatHourMinutes()}/week) "
+        "Average:  ${averageWorkDurationPerDay.formatHourMinutes()}/day (${averageWorkDurationPerWeek.formatHourMinutes()}/week) "
                 + "since ${earliestDay?.toFormattedFullDate()} ($numberOfWorkingDays working days)"
     )
 }
 
+private fun waitForever() {
+    Object().let {
+        synchronized(it) {
+            it.wait()
+        }
+    }
+}
+
 @ExperimentalTime
-private fun createTestDb() {
-    val db = Database(
-        Configuration(
-            databaseFile = File(
-                "workinghour.db"
-            ),
-            startOfDay = Time(Hour(6), Minutes(0)),
-            endOfMorning = Time(Hour(13), Minutes(0)),
-            startOfAfternoon = Time(Hour(13), Minutes(0)),
-            endOfDay = Time(Hour(23), Minutes(50)),
-            validDayMinimumDuration = 6.hours
-        )
-    )
+fun migrateLegacyDb(legacyDbFile: File, db: Database) {
+    val legacySqliteDatabase = LegacySqliteDatabase(legacyDbFile, db)
+    legacySqliteDatabase.logEverything()
+}
+
+@ExperimentalTime
+private fun createTestDb(db: Database) {
     val todayNow = DateTime.todayNow()
     val random = Random(System.currentTimeMillis())
     for (i in 0..400) {

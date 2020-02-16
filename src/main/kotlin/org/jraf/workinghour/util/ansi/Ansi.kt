@@ -23,19 +23,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.jraf.workinghour.util.duration
+package org.jraf.workinghour.util.ansi
 
-import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
+const val ANSI_ESC = "\u001B["
 
-@ExperimentalTime
-fun Duration.formatHourMinutes(): String {
-    val totalMinutes = inMinutes.toInt()
-    val hours = totalMinutes / 60
-    val remainMinutes = totalMinutes % 60
-    return when {
-        hours == 0 -> "${remainMinutes}m"
-        remainMinutes == 0 -> "${hours}h"
-        else -> "${hours}h${remainMinutes}m".format(hours, remainMinutes)
-    }
-}
+const val ANSI_CLEAR_SCREEN = "${ANSI_ESC}2J${ANSI_ESC}H"

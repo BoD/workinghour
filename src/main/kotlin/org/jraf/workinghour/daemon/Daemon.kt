@@ -30,7 +30,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jraf.workinghour.activitydetection.ActivityDetector
-import org.jraf.workinghour.conf.Configuration
 import org.jraf.workinghour.datetime.DateTime
 import org.jraf.workinghour.db.Database
 import kotlin.time.Duration
@@ -39,14 +38,13 @@ import kotlin.time.minutes
 
 @ExperimentalTime
 class Daemon(
-    configuration: Configuration,
+    private val database: Database,
     private val activityMonitoringPeriod: Duration = DEFAULT_ACTIVITY_MONITORING_PERIOD
 ) {
     var started: Boolean = false
         private set
 
     private val activityDetector = ActivityDetector(activityMonitoringPeriod)
-    private val database = Database(configuration)
 
     private var activityLoggingJob: Job? = null
 
