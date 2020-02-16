@@ -45,6 +45,8 @@ data class Date(
                 day = DayOfMonth(nowCalendar[Calendar.DAY_OF_MONTH])
             )
         }
+
+        fun build(year: Int, month: Int, day: Int) = Date(Year(year), Month.values()[month], DayOfMonth(day))
     }
 }
 

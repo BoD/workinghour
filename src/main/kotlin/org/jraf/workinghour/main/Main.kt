@@ -25,21 +25,68 @@
 
 package org.jraf.workinghour.main
 
-import org.jraf.workinghour.daemon.Daemon
+import org.jraf.workinghour.conf.Configuration
+import org.jraf.workinghour.datetime.DateTime
+import org.jraf.workinghour.datetime.Hour
+import org.jraf.workinghour.datetime.Minutes
+import org.jraf.workinghour.datetime.Time
+import org.jraf.workinghour.db.Database
 import java.io.File
 import kotlin.time.ExperimentalTime
-import kotlin.time.seconds
+import kotlin.time.days
 
 @ExperimentalTime
 fun main() {
     println("Hello, World!")
-    val daemon = Daemon(
-        databaseFile = File("workinghour.db"),
-        activityMonitoringPeriod = 1.seconds
-    ).apply { start() }
-    Object().let {
-        synchronized(it) {
-            it.wait()
-        }
+//    val daemon = Daemon(
+//        configuration = Configuration(
+//            databaseFile = File(
+//                "workinghour.db"
+//            ),
+//            startOfDay = Time(Hour(6), Minutes(0)),
+//            endOfMorning = Time(Hour(13), Minutes(0)),
+//            startOfAfternoon = Time(Hour(13), Minutes(0)),
+//            endOfDay = Time(Hour(23), Minutes(50))
+//        )//,
+////        activityMonitoringPeriod = 1.seconds
+//    ).apply { start() }
+//    Object().let {
+//        synchronized(it) {
+//            it.wait()
+//        }
+//    }
+
+
+}
+
+@ExperimentalTime
+private fun createTestDb() {
+    val db = Database(
+        Configuration(
+            databaseFile = File(
+                "workinghour.db"
+            ),
+            startOfDay = Time(Hour(6), Minutes(0)),
+            endOfMorning = Time(Hour(13), Minutes(0)),
+            startOfAfternoon = Time(Hour(13), Minutes(0)),
+            endOfDay = Time(Hour(23), Minutes(50))
+        )
+    )
+    val todayNow = DateTime.todayNow()
+    for (i in 0..400) {
+        val dateTime = todayNow - i.days
+        db.logActive(dateTime.copy(time = Time.build(9, 15)))
+        db.logActive(dateTime.copy(time = Time.build(10, 20)))
+        db.logActive(dateTime.copy(time = Time.build(11, 30)))
+        db.logActive(dateTime.copy(time = Time.build(12, 15)))
+        db.logActive(dateTime.copy(time = Time.build(12, 18)))
+        db.logActive(dateTime.copy(time = Time.build(13, 15)))
+        db.logActive(dateTime.copy(time = Time.build(14, 20)))
+        db.logActive(dateTime.copy(time = Time.build(15, 30)))
+        db.logActive(dateTime.copy(time = Time.build(16, 30)))
+        db.logActive(dateTime.copy(time = Time.build(16, 30)))
+        db.logActive(dateTime.copy(time = Time.build(17, 30)))
+        db.logActive(dateTime.copy(time = Time.build(18, 45)))
+        db.logActive(dateTime.copy(time = Time.build(19, 45)))
     }
 }

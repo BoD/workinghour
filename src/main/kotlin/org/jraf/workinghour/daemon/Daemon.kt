@@ -30,23 +30,23 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jraf.workinghour.activitydetection.ActivityDetector
-import org.jraf.workinghour.datetime.Date
+import org.jraf.workinghour.conf.Configuration
+import org.jraf.workinghour.datetime.DateTime
 import org.jraf.workinghour.db.Database
-import java.io.File
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.minutes
 
 @ExperimentalTime
 class Daemon(
-    databaseFile: File,
+    configuration: Configuration,
     private val activityMonitoringPeriod: Duration = DEFAULT_ACTIVITY_MONITORING_PERIOD
 ) {
     var started: Boolean = false
         private set
 
     private val activityDetector = ActivityDetector(activityMonitoringPeriod)
-    private val database = Database(databaseFile)
+    private val database = Database(configuration)
 
     private var activityLoggingJob: Job? = null
 
@@ -68,11 +68,8 @@ class Daemon(
         activityDetector.start()
         activityLoggingJob = GlobalScope.launch {
             while (true) {
-                if (activityDetector.isActive) database.logActive()
-
-                val today = Date.today()
-                println("🛬 ${database.firstLogOfDay(today)}  🛫 ${database.lastLogOfDay(today)}")
-
+                val todayNow = DateTime.todayNow()
+                if (activityDetector.isActive) database.logActive(todayNow)
                 delay(activityMonitoringPeriod.toLongMilliseconds())
             }
         }

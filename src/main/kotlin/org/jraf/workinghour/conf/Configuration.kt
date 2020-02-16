@@ -23,34 +23,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.jraf.workinghour.db
+package org.jraf.workinghour.conf
 
-import org.jraf.workinghour.datetime.DateTime
-import kotlin.time.ExperimentalTime
+import org.jraf.workinghour.datetime.Time
+import java.io.File
 
-@ExperimentalTime
-data class Log(
-    val id: LogId,
-    val logType: LogType,
-    val dateTime: DateTime
+data class Configuration(
+    val databaseFile: File,
+    val startOfDay: Time,
+    val endOfMorning: Time,
+    val startOfAfternoon: Time,
+    val endOfDay: Time
 )
-
-inline class LogId(val id: Int)
-
-enum class LogType(val dbRepresentation: Int) {
-    FIRST_OF_DAY(0),
-    LAST_OF_MORNING(1),
-    FIRST_OF_AFTERNOON(2),
-    LAST_OF_DAY(3),
-    ;
-
-    companion object {
-        fun fromDbRepresentation(dbRepresentation: Int): LogType = when (dbRepresentation) {
-            0 -> FIRST_OF_DAY
-            1 -> LAST_OF_MORNING
-            2 -> FIRST_OF_AFTERNOON
-            3 -> LAST_OF_DAY
-            else -> throw IllegalArgumentException("Unknown EventType $dbRepresentation")
-        }
-    }
-}

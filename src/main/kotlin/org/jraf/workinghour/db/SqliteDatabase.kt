@@ -38,7 +38,9 @@ import java.io.File
 import java.sql.DriverManager
 import java.sql.PreparedStatement
 import java.sql.ResultSet
+import kotlin.time.ExperimentalTime
 
+@ExperimentalTime
 class SqliteDatabase(
     private val databaseFile: File
 ) {
@@ -78,48 +80,16 @@ class SqliteDatabase(
         )
     }
 
-    private val selectFirstLogOfDayStatement: PreparedStatement by lazy {
+    private val selectLogOfDayWithTypeStatement: PreparedStatement by lazy {
         connection.prepareStatement(
             """
-            SELECT
-                $COLUMN_ACTIVITY_LOG_ID,
-                $COLUMN_ACTIVITY_LOG_TYPE,
-                $COLUMN_ACTIVITY_LOG_YEAR,
-                $COLUMN_ACTIVITY_LOG_MONTH,
-                $COLUMN_ACTIVITY_LOG_DAY,
-                $COLUMN_ACTIVITY_LOG_HOUR,
-                $COLUMN_ACTIVITY_LOG_MINUTE
+            SELECT $ACTIVITY_LOG_ALL_COLUMNS
             FROM $TABLE_NAME_ACTIVITY_LOG
             WHERE
             $COLUMN_ACTIVITY_LOG_YEAR = ?
             AND $COLUMN_ACTIVITY_LOG_MONTH = ?
             AND $COLUMN_ACTIVITY_LOG_DAY = ?
             AND $COLUMN_ACTIVITY_LOG_TYPE = ?
-            ORDER BY $COLUMN_ACTIVITY_LOG_ID
-            LIMIT 1
-            """.trimIndent()
-        )
-    }
-
-    private val selectLastLogOfDayStatement: PreparedStatement by lazy {
-        connection.prepareStatement(
-            """
-            SELECT
-                $COLUMN_ACTIVITY_LOG_ID,
-                $COLUMN_ACTIVITY_LOG_TYPE,
-                $COLUMN_ACTIVITY_LOG_YEAR,
-                $COLUMN_ACTIVITY_LOG_MONTH,
-                $COLUMN_ACTIVITY_LOG_DAY,
-                $COLUMN_ACTIVITY_LOG_HOUR,
-                $COLUMN_ACTIVITY_LOG_MINUTE
-            FROM $TABLE_NAME_ACTIVITY_LOG
-            WHERE
-            $COLUMN_ACTIVITY_LOG_YEAR = ?
-            AND $COLUMN_ACTIVITY_LOG_MONTH = ?
-            AND $COLUMN_ACTIVITY_LOG_DAY = ?
-            AND $COLUMN_ACTIVITY_LOG_TYPE = ?
-            ORDER BY $COLUMN_ACTIVITY_LOG_ID DESC
-            LIMIT 1
             """.trimIndent()
         )
     }
@@ -165,23 +135,23 @@ class SqliteDatabase(
     }
 
     @Synchronized
-    fun firstLogOfDay(date: Date): Log? {
-        val resultSet = selectFirstLogOfDayStatement.intParams(
-            date.year.year,
-            date.month.dbRepresentation,
-            date.day.dayOfMonth,
-            LogType.FIRST_OF_DAY.dbRepresentation
-        ).executeQuery()
-        return logFromResultSet(resultSet)
-    }
+    fun firstLogOfDay(date: Date): Log? = logOfDayWithType(date, LogType.FIRST_OF_DAY)
 
     @Synchronized
-    fun lastLogOfDay(date: Date): Log? {
-        val resultSet = selectLastLogOfDayStatement.intParams(
+    fun lastLogOfDay(date: Date): Log? = logOfDayWithType(date, LogType.LAST_OF_DAY)
+
+    @Synchronized
+    fun lastLogOfMorning(date: Date): Log? = logOfDayWithType(date, LogType.LAST_OF_MORNING)
+
+    @Synchronized
+    fun firstLogOfAfternoon(date: Date): Log? = logOfDayWithType(date, LogType.FIRST_OF_AFTERNOON)
+
+    private fun logOfDayWithType(date: Date, logType: LogType): Log? {
+        val resultSet = selectLogOfDayWithTypeStatement.intParams(
             date.year.year,
             date.month.dbRepresentation,
             date.day.dayOfMonth,
-            LogType.LAST_OF_DAY.dbRepresentation
+            logType.dbRepresentation
         ).executeQuery()
         return logFromResultSet(resultSet)
     }
@@ -214,6 +184,16 @@ class SqliteDatabase(
         private const val COLUMN_ACTIVITY_LOG_DAY = "day"
         private const val COLUMN_ACTIVITY_LOG_HOUR = "hour"
         private const val COLUMN_ACTIVITY_LOG_MINUTE = "minute"
+
+        private val ACTIVITY_LOG_ALL_COLUMNS = """
+            $COLUMN_ACTIVITY_LOG_ID,
+            $COLUMN_ACTIVITY_LOG_TYPE,
+            $COLUMN_ACTIVITY_LOG_YEAR,
+            $COLUMN_ACTIVITY_LOG_MONTH,
+            $COLUMN_ACTIVITY_LOG_DAY,
+            $COLUMN_ACTIVITY_LOG_HOUR,
+            $COLUMN_ACTIVITY_LOG_MINUTE
+        """.trimIndent()
     }
 }
 
