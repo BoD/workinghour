@@ -25,13 +25,13 @@
 
 package org.jraf.workinghour.db
 
-import org.jraf.workinghour.datetime.CalendarDate
+import org.jraf.workinghour.datetime.Date
 import org.jraf.workinghour.datetime.DateTime
 import org.jraf.workinghour.datetime.DayOfMonth
 import org.jraf.workinghour.datetime.Hour
 import org.jraf.workinghour.datetime.Minutes
 import org.jraf.workinghour.datetime.Month
-import org.jraf.workinghour.datetime.TimeOfDay
+import org.jraf.workinghour.datetime.Time
 import org.jraf.workinghour.datetime.Year
 import org.jraf.workinghour.util.jdbc.intParams
 import java.io.File
@@ -39,7 +39,9 @@ import java.sql.DriverManager
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 
-class SqliteDatabase(private val databaseFile: File) {
+class SqliteDatabase(
+    private val databaseFile: File
+) {
 
     private val connection by lazy {
         Class.forName("net.sf.log4jdbc.DriverSpy")
@@ -47,14 +49,14 @@ class SqliteDatabase(private val databaseFile: File) {
         connection.createStatement()
             .executeUpdate(
                 """
-                CREATE TABLE IF NOT EXISTS activity_event (
-                    id INTEGER PRIMARY KEY ON CONFLICT IGNORE NOT NULL,
-                    year INTEGER NOT NULL,
-                    month INTEGER NOT NULL,
-                    day INTEGER NOT NULL,
-                    hour INTEGER NOT NULL,
-                    minute INTEGER NOT NULL,
-                    event_type INTEGER NOT NULL
+                CREATE TABLE IF NOT EXISTS $TABLE_NAME_ACTIVITY_LOG (
+                    $COLUMN_ACTIVITY_LOG_ID INTEGER PRIMARY KEY ON CONFLICT REPLACE NOT NULL,
+                    $COLUMN_ACTIVITY_LOG_TYPE INTEGER NOT NULL,
+                    $COLUMN_ACTIVITY_LOG_YEAR INTEGER NOT NULL,
+                    $COLUMN_ACTIVITY_LOG_MONTH INTEGER NOT NULL,
+                    $COLUMN_ACTIVITY_LOG_DAY INTEGER NOT NULL,
+                    $COLUMN_ACTIVITY_LOG_HOUR INTEGER NOT NULL,
+                    $COLUMN_ACTIVITY_LOG_MINUTE INTEGER NOT NULL
                 )
                 """.trimIndent()
             )
@@ -62,119 +64,157 @@ class SqliteDatabase(private val databaseFile: File) {
     }
 
     private val insertEventStatement: PreparedStatement by lazy {
-        connection.prepareStatement("INSERT INTO activity_event (year, month, day, hour, minute, event_type) VALUES (?, ?, ?, ?, ?, ?)")
-    }
-
-    private val selectFirstActiveEventForDayStatement: PreparedStatement by lazy {
         connection.prepareStatement(
             """
-            SELECT year, month, day, hour, minute, event_type
-            FROM activity_event
+            INSERT INTO $TABLE_NAME_ACTIVITY_LOG (
+                $COLUMN_ACTIVITY_LOG_TYPE, 
+                $COLUMN_ACTIVITY_LOG_YEAR, 
+                $COLUMN_ACTIVITY_LOG_MONTH, 
+                $COLUMN_ACTIVITY_LOG_DAY, 
+                $COLUMN_ACTIVITY_LOG_HOUR, 
+                $COLUMN_ACTIVITY_LOG_MINUTE
+            ) VALUES (?, ?, ?, ?, ?, ?)
+            """.trimIndent()
+        )
+    }
+
+    private val selectFirstLogOfDayStatement: PreparedStatement by lazy {
+        connection.prepareStatement(
+            """
+            SELECT
+                $COLUMN_ACTIVITY_LOG_ID,
+                $COLUMN_ACTIVITY_LOG_TYPE,
+                $COLUMN_ACTIVITY_LOG_YEAR,
+                $COLUMN_ACTIVITY_LOG_MONTH,
+                $COLUMN_ACTIVITY_LOG_DAY,
+                $COLUMN_ACTIVITY_LOG_HOUR,
+                $COLUMN_ACTIVITY_LOG_MINUTE
+            FROM $TABLE_NAME_ACTIVITY_LOG
             WHERE
-            year = ?
-            AND month = ?
-            AND day = ?
-            AND event_type = ?
-            ORDER BY id
+            $COLUMN_ACTIVITY_LOG_YEAR = ?
+            AND $COLUMN_ACTIVITY_LOG_MONTH = ?
+            AND $COLUMN_ACTIVITY_LOG_DAY = ?
+            AND $COLUMN_ACTIVITY_LOG_TYPE = ?
+            ORDER BY $COLUMN_ACTIVITY_LOG_ID
             LIMIT 1
             """.trimIndent()
         )
     }
 
-    private val selectLastActiveEventForDayStatement: PreparedStatement by lazy {
+    private val selectLastLogOfDayStatement: PreparedStatement by lazy {
         connection.prepareStatement(
             """
-            SELECT year, month, day, hour, minute, event_type
-            FROM activity_event
+            SELECT
+                $COLUMN_ACTIVITY_LOG_ID,
+                $COLUMN_ACTIVITY_LOG_TYPE,
+                $COLUMN_ACTIVITY_LOG_YEAR,
+                $COLUMN_ACTIVITY_LOG_MONTH,
+                $COLUMN_ACTIVITY_LOG_DAY,
+                $COLUMN_ACTIVITY_LOG_HOUR,
+                $COLUMN_ACTIVITY_LOG_MINUTE
+            FROM $TABLE_NAME_ACTIVITY_LOG
             WHERE
-            year = ?
-            AND month = ?
-            AND day = ?
-            AND event_type = ?
-            ORDER BY id DESC
+            $COLUMN_ACTIVITY_LOG_YEAR = ?
+            AND $COLUMN_ACTIVITY_LOG_MONTH = ?
+            AND $COLUMN_ACTIVITY_LOG_DAY = ?
+            AND $COLUMN_ACTIVITY_LOG_TYPE = ?
+            ORDER BY $COLUMN_ACTIVITY_LOG_ID DESC
             LIMIT 1
             """.trimIndent()
         )
     }
 
+    private val updateLogDateTimeStatement: PreparedStatement by lazy {
+        connection.prepareStatement(
+            """
+            UPDATE $TABLE_NAME_ACTIVITY_LOG
+            SET
+                $COLUMN_ACTIVITY_LOG_YEAR = ?,
+                $COLUMN_ACTIVITY_LOG_MONTH = ?,
+                $COLUMN_ACTIVITY_LOG_DAY = ?,
+                $COLUMN_ACTIVITY_LOG_HOUR = ?,
+                $COLUMN_ACTIVITY_LOG_MINUTE = ?
+            WHERE
+            $COLUMN_ACTIVITY_LOG_ID = ?
+            """.trimIndent()
+        )
+    }
 
     @Synchronized
-    fun logEvent(dateTime: DateTime, eventType: EventType) {
+    fun insertLog(logType: LogType, dateTime: DateTime) {
         insertEventStatement.intParams(
+            logType.dbRepresentation,
             dateTime.date.year.year,
             dateTime.date.month.dbRepresentation,
             dateTime.date.day.dayOfMonth,
-            dateTime.timeOfDay.hour.hour,
-            dateTime.timeOfDay.minutes.minutes,
-            eventType.dbRepresentation
+            dateTime.time.hour.hour,
+            dateTime.time.minutes.minutes
         ).execute()
     }
 
-    fun startOfWorkDay(date: CalendarDate): TimeOfDay? {
-        val resultSet = selectFirstActiveEventForDayStatement.intParams(
+    @Synchronized
+    fun updateLogDateTime(logId: LogId, dateTime: DateTime) {
+        updateLogDateTimeStatement.intParams(
+            dateTime.date.year.year,
+            dateTime.date.month.dbRepresentation,
+            dateTime.date.day.dayOfMonth,
+            dateTime.time.hour.hour,
+            dateTime.time.minutes.minutes,
+            logId.id
+        ).execute()
+    }
+
+    @Synchronized
+    fun firstLogOfDay(date: Date): Log? {
+        val resultSet = selectFirstLogOfDayStatement.intParams(
             date.year.year,
             date.month.dbRepresentation,
             date.day.dayOfMonth,
-            EventType.ACTIVE.dbRepresentation
+            LogType.FIRST_OF_DAY.dbRepresentation
         ).executeQuery()
-        return eventFromResultSet(resultSet)?.dateTime?.timeOfDay
+        return logFromResultSet(resultSet)
     }
 
-    fun endOfWorkDay(date: CalendarDate): TimeOfDay? {
-        val resultSet = selectLastActiveEventForDayStatement.intParams(
+    @Synchronized
+    fun lastLogOfDay(date: Date): Log? {
+        val resultSet = selectLastLogOfDayStatement.intParams(
             date.year.year,
             date.month.dbRepresentation,
             date.day.dayOfMonth,
-            EventType.ACTIVE.dbRepresentation
+            LogType.LAST_OF_DAY.dbRepresentation
         ).executeQuery()
-        return eventFromResultSet(resultSet)?.dateTime?.timeOfDay
+        return logFromResultSet(resultSet)
     }
 
-    private fun eventFromResultSet(resultSet: ResultSet): Event? {
+    private fun logFromResultSet(resultSet: ResultSet): Log? {
         if (!resultSet.isBeforeFirst) return null
-        return Event(
-            DateTime(
-                CalendarDate(
-                    Year(resultSet.getInt(1)),
-                    Month.fromDbRepresentation(resultSet.getInt(2)),
-                    DayOfMonth(resultSet.getInt(3))
+        return Log(
+            id = LogId(resultSet.getInt(1)),
+            logType = LogType.fromDbRepresentation(resultSet.getInt(2)),
+            dateTime = DateTime(
+                Date(
+                    Year(resultSet.getInt(3)),
+                    Month.fromDbRepresentation(resultSet.getInt(4)),
+                    DayOfMonth(resultSet.getInt(5))
                 ),
-                TimeOfDay(
-                    Hour(resultSet.getInt(4)),
-                    Minutes(resultSet.getInt(5))
+                Time(
+                    Hour(resultSet.getInt(6)),
+                    Minutes(resultSet.getInt(7))
                 )
-            ),
-            EventType.fromDbRepresentation(resultSet.getInt(6))
+            )
         )
     }
 
-    enum class EventType(val dbRepresentation: Int) {
-        INACTIVE(0),
-        ACTIVE(1);
-
-        companion object {
-            fun fromDbRepresentation(dbRepresentation: Int): EventType = when (dbRepresentation) {
-                0 -> INACTIVE
-                1 -> ACTIVE
-                else -> throw IllegalArgumentException("Unknown EventType $dbRepresentation")
-            }
-        }
+    companion object {
+        private const val TABLE_NAME_ACTIVITY_LOG = "activity_log"
+        private const val COLUMN_ACTIVITY_LOG_ID = "id"
+        private const val COLUMN_ACTIVITY_LOG_TYPE = "type"
+        private const val COLUMN_ACTIVITY_LOG_YEAR = "year"
+        private const val COLUMN_ACTIVITY_LOG_MONTH = "month"
+        private const val COLUMN_ACTIVITY_LOG_DAY = "day"
+        private const val COLUMN_ACTIVITY_LOG_HOUR = "hour"
+        private const val COLUMN_ACTIVITY_LOG_MINUTE = "minute"
     }
-
-    data class Event(
-        val dateTime: DateTime,
-        val eventType: EventType
-    )
-}
-
-private fun DateTime.toId(): Long {
-    return "%1\$d%2\$02d%3\$02d%4\$02d%5\$02d".format(
-        date.year.year,
-        date.month.ordinal,
-        date.day.dayOfMonth,
-        timeOfDay.hour.hour,
-        timeOfDay.minutes.minutes
-    ).toLong()
 }
 
 private val Month.dbRepresentation: Int

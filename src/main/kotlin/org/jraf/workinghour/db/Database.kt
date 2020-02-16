@@ -25,9 +25,9 @@
 
 package org.jraf.workinghour.db
 
-import org.jraf.workinghour.datetime.CalendarDate
+import org.jraf.workinghour.datetime.Date
 import org.jraf.workinghour.datetime.DateTime
-import org.jraf.workinghour.datetime.TimeOfDay
+import org.jraf.workinghour.datetime.Time
 import java.io.File
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
@@ -37,38 +37,42 @@ class Database(databaseFile: File) {
     private val sqliteDatabase = SqliteDatabase(databaseFile)
 
     fun logActive() {
-        sqliteDatabase.logEvent(DateTime.now(), SqliteDatabase.EventType.ACTIVE)
+        updateFirstLogOfDay()
+        updateLastLogOfDay()
     }
 
-    fun logInactive() {
-        sqliteDatabase.logEvent(DateTime.now(), SqliteDatabase.EventType.INACTIVE)
+    private fun updateFirstLogOfDay() {
+        val firstLogOfDay = sqliteDatabase.firstLogOfDay(Date.today())
+        if (firstLogOfDay == null) sqliteDatabase.insertLog(LogType.FIRST_OF_DAY, DateTime.todayNow())
     }
 
-    fun startOfWorkDay(date: CalendarDate): TimeOfDay? {
-        return sqliteDatabase.startOfWorkDay(date)
+    private fun updateLastLogOfDay() {
+        val lastLogOfDay = sqliteDatabase.lastLogOfDay(Date.today())
+        if (lastLogOfDay == null) {
+            sqliteDatabase.insertLog(LogType.LAST_OF_DAY, DateTime.todayNow())
+        } else {
+            sqliteDatabase.updateLogDateTime(lastLogOfDay.id, DateTime.todayNow())
+        }
     }
 
-    fun startOfLunchBreak(date: CalendarDate): TimeOfDay {
+
+    fun firstLogOfDay(date: Date): Time? {
+        return sqliteDatabase.firstLogOfDay(Date.today())?.dateTime?.time
+    }
+
+    fun lastLogOfDay(date: Date): Time? {
+        return sqliteDatabase.lastLogOfDay(Date.today())?.dateTime?.time
+    }
+
+    fun workDurationForDate(date: Date): Duration {
         TODO()
     }
 
-    fun endOfLunchBreak(date: CalendarDate): TimeOfDay {
+    fun workDurationForWeek(dayIncludedInWeek: Date): Duration {
         TODO()
     }
 
-    fun endOfWorkDay(date: CalendarDate): TimeOfDay? {
-        return sqliteDatabase.endOfWorkDay(date)
-    }
-
-    fun workDurationForDate(date: CalendarDate): Duration {
-        TODO()
-    }
-
-    fun workDurationForWeek(dayIncludedInWeek: CalendarDate): Duration {
-        TODO()
-    }
-
-    fun averageWorkDurationPerDay(since: CalendarDate): Duration {
+    fun averageWorkDurationPerDay(since: Date): Duration {
         TODO()
     }
 }

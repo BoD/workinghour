@@ -27,46 +27,31 @@ package org.jraf.workinghour.datetime
 
 import java.util.Calendar
 
-data class CalendarDate(
-    val year: Year,
-    val month: Month,
-    val day: DayOfMonth
+data class Time(
+    val hour: Hour,
+    val minutes: Minutes
 ) {
     init {
-        if (!day.isValid) throw IllegalArgumentException("Invalid day of month")
+        if (!hour.isValid) throw IllegalArgumentException("Invalid hour")
+        if (!minutes.isValid) throw IllegalArgumentException("Invalid minutes")
     }
 
     companion object {
-        fun now(): CalendarDate {
+        fun now(): Time {
             val nowCalendar = Calendar.getInstance()
-            return CalendarDate(
-                year = Year(nowCalendar[Calendar.YEAR]),
-                month = Month.values()[nowCalendar[Calendar.MONTH]],
-                day = DayOfMonth(nowCalendar[Calendar.DAY_OF_MONTH])
+            return Time(
+                hour = Hour(nowCalendar[Calendar.HOUR_OF_DAY]),
+                minutes = Minutes(nowCalendar[Calendar.MINUTE])
             )
         }
     }
+
 }
 
-inline class Year(val year: Int)
-
-enum class Month {
-    JANUARY,
-    FEBRUARY,
-    MARCH,
-    APRIL,
-    MAY,
-    JUNE,
-    JULY,
-    AUGUST,
-    SEPTEMBER,
-    OCTOBER,
-    NOVEMBER,
-    DECEMBER;
-
-    companion object
+inline class Hour(val hour: Int) {
+    val isValid get() = hour in 0..23
 }
 
-inline class DayOfMonth(val dayOfMonth: Int) {
-    val isValid get() = dayOfMonth in 1..31
+inline class Minutes(val minutes: Int) {
+    val isValid get() = minutes in 0..59
 }

@@ -23,35 +23,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.jraf.workinghour.datetime
+package org.jraf.workinghour.db
 
-import java.util.Calendar
+import org.jraf.workinghour.datetime.DateTime
 
-data class TimeOfDay(
-    val hour: Hour,
-    val minutes: Minutes
-) {
-    init {
-        if (!hour.isValid) throw IllegalArgumentException("Invalid hour")
-        if (!minutes.isValid) throw IllegalArgumentException("Invalid minutes")
-    }
+data class Log(
+    val id: LogId,
+    val logType: LogType,
+    val dateTime: DateTime
+)
+
+inline class LogId(val id: Int)
+
+enum class LogType(val dbRepresentation: Int) {
+    FIRST_OF_DAY(0),
+    LAST_OF_MORNING(1),
+    FIRST_OF_AFTERNOON(2),
+    LAST_OF_DAY(3),
+    ;
 
     companion object {
-        fun now(): TimeOfDay {
-            val nowCalendar = Calendar.getInstance()
-            return TimeOfDay(
-                hour = Hour(nowCalendar[Calendar.HOUR_OF_DAY]),
-                minutes = Minutes(nowCalendar[Calendar.MINUTE])
-            )
+        fun fromDbRepresentation(dbRepresentation: Int): LogType = when (dbRepresentation) {
+            0 -> FIRST_OF_DAY
+            1 -> LAST_OF_MORNING
+            2 -> FIRST_OF_AFTERNOON
+            3 -> LAST_OF_DAY
+            else -> throw IllegalArgumentException("Unknown EventType $dbRepresentation")
         }
     }
-
-}
-
-inline class Hour(val hour: Int) {
-    val isValid get() = hour in 0..23
-}
-
-inline class Minutes(val minutes: Int) {
-    val isValid get() = minutes in 0..59
 }

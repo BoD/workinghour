@@ -25,11 +25,48 @@
 
 package org.jraf.workinghour.datetime
 
-data class DateTime(
-    val date: Date,
-    val time: Time
-){
-    companion object {
-        fun todayNow(): DateTime = DateTime(Date.today(), Time.now())
+import java.util.Calendar
+
+data class Date(
+    val year: Year,
+    val month: Month,
+    val day: DayOfMonth
+) {
+    init {
+        if (!day.isValid) throw IllegalArgumentException("Invalid day of month")
     }
+
+    companion object {
+        fun today(): Date {
+            val nowCalendar = Calendar.getInstance()
+            return Date(
+                year = Year(nowCalendar[Calendar.YEAR]),
+                month = Month.values()[nowCalendar[Calendar.MONTH]],
+                day = DayOfMonth(nowCalendar[Calendar.DAY_OF_MONTH])
+            )
+        }
+    }
+}
+
+inline class Year(val year: Int)
+
+enum class Month {
+    JANUARY,
+    FEBRUARY,
+    MARCH,
+    APRIL,
+    MAY,
+    JUNE,
+    JULY,
+    AUGUST,
+    SEPTEMBER,
+    OCTOBER,
+    NOVEMBER,
+    DECEMBER;
+
+    companion object
+}
+
+inline class DayOfMonth(val dayOfMonth: Int) {
+    val isValid get() = dayOfMonth in 1..31
 }
