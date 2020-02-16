@@ -31,6 +31,7 @@ import org.jraf.workinghour.datetime.DateTime
 import org.jraf.workinghour.datetime.Time
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
+import kotlin.time.minutes
 
 @ExperimentalTime
 class Database(
@@ -39,6 +40,9 @@ class Database(
     private val sqliteDatabase = SqliteDatabase(configuration.databaseFile)
 
     fun logActive(dateTime: DateTime) {
+        // Ignore weekends
+        if (dateTime.date.isWeekend) return
+
         // Ignore "very late" (early the next day) logs
         if (dateTime.time < configuration.startOfDay) return
 
@@ -98,8 +102,18 @@ class Database(
         return sqliteDatabase.lastLogOfDay(date)?.dateTime?.time
     }
 
-    fun workDurationForDate(date: Date): Duration {
-        TODO()
+    fun workDurationForDate(
+        firstLogOfDay: Time?,
+        lastLogOfMorning: Time?,
+        firstLogOfAfternoon: Time?,
+        lastLogOfDay: Time?
+    ): Duration {
+        if (firstLogOfDay == null || lastLogOfDay == null) return 0.minutes
+        var duration = lastLogOfDay - firstLogOfDay
+        if (lastLogOfMorning != null && firstLogOfAfternoon != null) {
+            duration -= (firstLogOfAfternoon - lastLogOfMorning)
+        }
+        return duration
     }
 
     fun workDurationForWeek(dayIncludedInWeek: Date): Duration {

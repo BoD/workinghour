@@ -25,6 +25,7 @@
 
 package org.jraf.workinghour.datetime
 
+import java.text.SimpleDateFormat
 import java.util.Calendar
 
 data class Date(
@@ -32,11 +33,30 @@ data class Date(
     val month: Month,
     val day: DayOfMonth
 ) {
+    val isWeekend: Boolean
+
     init {
         if (!day.isValid) throw IllegalArgumentException("Invalid day of month")
+        val dayOfWeek = asCalendar()[Calendar.DAY_OF_WEEK]
+        isWeekend = dayOfWeek == Calendar.SATURDAY || dayOfWeek == Calendar.SUNDAY
     }
 
+    fun toFormattedWeekDay(): String = WEEK_DAY_FORMAT.format(asCalendar().time)
+
+    private fun asCalendar(): Calendar = Calendar.getInstance().apply {
+        set(Calendar.YEAR, year.year)
+        set(Calendar.MONTH, month.ordinal)
+        set(Calendar.DAY_OF_MONTH, day.dayOfMonth)
+        set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }
+
+
     companion object {
+        private val WEEK_DAY_FORMAT = SimpleDateFormat("EEEE")
+
         fun today(): Date {
             val nowCalendar = Calendar.getInstance()
             return Date(
@@ -48,6 +68,7 @@ data class Date(
 
         fun build(year: Int, month: Int, day: Int) = Date(Year(year), Month.values()[month], DayOfMonth(day))
     }
+
 }
 
 inline class Year(val year: Int)

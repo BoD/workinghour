@@ -26,7 +26,11 @@
 package org.jraf.workinghour.datetime
 
 import java.util.Calendar
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
+import kotlin.time.minutes
 
+@ExperimentalTime
 data class Time(
     val hour: Hour,
     val minutes: Minutes
@@ -40,6 +44,10 @@ data class Time(
         minutes.compareTo(other.minutes)
     } else {
         hour.compareTo(other.hour)
+    }
+
+    operator fun minus(other: Time): Duration {
+        return ((hour.hour * 60 + minutes.minutes) - (other.hour.hour * 60 + other.minutes.minutes)).minutes
     }
 
     fun toFormattedString() = "%1\$d:%2\$02d".format(hour.hour, minutes.minutes)

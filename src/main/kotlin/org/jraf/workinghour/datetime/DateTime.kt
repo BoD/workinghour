@@ -34,9 +34,11 @@ data class DateTime(
     val date: Date,
     val time: Time
 ) {
-    operator fun minus(duration: Duration): DateTime {
-        return asCalendar().apply { add(Calendar.MINUTE, -duration.inMinutes.toInt()) }.asDateTime()
+    operator fun plus(duration: Duration): DateTime {
+        return asCalendar().apply { add(Calendar.MINUTE, duration.inMinutes.toInt()) }.asDateTime()
     }
+
+    operator fun minus(duration: Duration) = plus(-duration)
 
     private fun asCalendar(): Calendar = Calendar.getInstance().apply {
         set(Calendar.YEAR, date.year.year)

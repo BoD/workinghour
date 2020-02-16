@@ -23,16 +23,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.jraf.workinghour.conf
+package org.jraf.workinghour.util.duration
 
-import org.jraf.workinghour.datetime.Time
-import java.io.File
+import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
-data class Configuration @ExperimentalTime constructor(
-    val databaseFile: File,
-    val startOfDay: Time,
-    val endOfMorning: Time,
-    val startOfAfternoon: Time,
-    val endOfDay: Time
-)
+@ExperimentalTime
+fun Duration.formatHourMinutes(): String {
+    val totalMinutes = inMinutes.toInt()
+    val hours = totalMinutes / 60
+    val remainMinutes = totalMinutes % 60
+    return when {
+        hours == 0 -> "${remainMinutes}m"
+        remainMinutes == 0 -> "${hours}h"
+        else -> "%1\$dh%2\$02dm".format(hours, remainMinutes)
+    }
+}
