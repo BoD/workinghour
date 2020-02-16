@@ -68,19 +68,11 @@ data class Time(
 inline class Hour(val hour: Int) {
     val isValid get() = hour in 0..23
 
-    operator fun compareTo(other: Hour) = when {
-        hour == other.hour -> 0
-        hour < other.hour -> -1
-        else -> 1
-    }
+    operator fun compareTo(other: Hour) = hour.compareTo(other.hour)
 }
 
 inline class Minutes(val minutes: Int) {
     val isValid get() = minutes in 0..59
 
-    operator fun compareTo(other: Minutes) = when {
-        minutes == other.minutes -> 0
-        minutes < other.minutes -> -1
-        else -> 1
-    }
+    operator fun compareTo(other: Minutes) = minutes.compareTo(other.minutes)
 }

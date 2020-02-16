@@ -37,7 +37,9 @@ import kotlin.random.Random
 import kotlin.random.nextInt
 import kotlin.time.ExperimentalTime
 import kotlin.time.days
+import kotlin.time.hours
 
+@ExperimentalStdlibApi
 @ExperimentalTime
 fun main() {
     println("Hello, World!")
@@ -69,10 +71,12 @@ fun main() {
             startOfDay = Time(Hour(6), Minutes(0)),
             endOfMorning = Time(Hour(13), Minutes(0)),
             startOfAfternoon = Time(Hour(13), Minutes(0)),
-            endOfDay = Time(Hour(23), Minutes(50))
+            endOfDay = Time(Hour(23), Minutes(50)),
+            validDayMinimumDuration = 6.hours
         )
     )
 
+    // Days
     val todayNow = DateTime.todayNow()
     var dateTime = todayNow + 1.days
     for (i in 0..7) {
@@ -84,7 +88,7 @@ fun main() {
         val lastLogOfMorning = db.lastLogOfMorning(date)
         val firstLogOfAfternoon = db.firstLogOfAfternoon(date)
         val lastLogOfDay = db.lastLogOfDay(date)
-        val workDurationForDate = db.workDurationForDate(firstLogOfDay, lastLogOfMorning, firstLogOfAfternoon, lastLogOfDay)
+        val workDurationForDate = db.workDurationForDay(firstLogOfDay, lastLogOfMorning, firstLogOfAfternoon, lastLogOfDay)
         println(
             "$formattedWeekDay:"
                     + "  🛬 ${firstLogOfDay?.toFormattedString()}"
@@ -94,6 +98,26 @@ fun main() {
                     + "  ${workDurationForDate.formatHourMinutes()}"
         )
     }
+
+    // Weeks
+    var day = todayNow.date
+    for (i in 0..4) {
+        val workDurationForWeek = db.workDurationForWeek(day)
+        println("$i weeks ago:  ${workDurationForWeek.formatHourMinutes()}")
+        day -= 7.days
+    }
+
+    // Total average
+    val startDate = todayNow.date - 365.days
+    val averageWorkDurationPerDayResults = db.averageWorkDurationPerDay(startDate = startDate, endDate = todayNow.date)
+    val averageWorkDurationPerDay = averageWorkDurationPerDayResults.averageWorkDurationPerDay
+    val averageWorkDurationPerWeek = averageWorkDurationPerDay * 5
+    val numberOfWorkingDays = averageWorkDurationPerDayResults.numberOfWorkingDays
+    val earliestDay = averageWorkDurationPerDayResults.earliestDay
+    println(
+        "Total average:  ${averageWorkDurationPerDay.formatHourMinutes()}/day (${averageWorkDurationPerWeek.formatHourMinutes()}/week) "
+                + "since ${earliestDay?.toFormattedFullDate()} ($numberOfWorkingDays working days)"
+    )
 }
 
 @ExperimentalTime
@@ -106,7 +130,8 @@ private fun createTestDb() {
             startOfDay = Time(Hour(6), Minutes(0)),
             endOfMorning = Time(Hour(13), Minutes(0)),
             startOfAfternoon = Time(Hour(13), Minutes(0)),
-            endOfDay = Time(Hour(23), Minutes(50))
+            endOfDay = Time(Hour(23), Minutes(50)),
+            validDayMinimumDuration = 6.hours
         )
     )
     val todayNow = DateTime.todayNow()

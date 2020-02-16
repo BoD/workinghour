@@ -31,6 +31,7 @@ import org.jraf.workinghour.datetime.DateTime
 import org.jraf.workinghour.datetime.Time
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
+import kotlin.time.days
 import kotlin.time.minutes
 
 @ExperimentalTime
@@ -40,6 +41,8 @@ class Database(
     private val sqliteDatabase = SqliteDatabase(configuration.databaseFile)
 
     fun logActive(dateTime: DateTime) {
+        println("logActive $dateTime")
+
         // Ignore weekends
         if (dateTime.date.isWeekend) return
 
@@ -102,7 +105,7 @@ class Database(
         return sqliteDatabase.lastLogOfDay(date)?.dateTime?.time
     }
 
-    fun workDurationForDate(
+    fun workDurationForDay(
         firstLogOfDay: Time?,
         lastLogOfMorning: Time?,
         firstLogOfAfternoon: Time?,
@@ -116,11 +119,71 @@ class Database(
         return duration
     }
 
-    fun workDurationForWeek(dayIncludedInWeek: Date): Duration {
-        TODO()
+    private fun workDurationForDay(date: Date): Duration {
+        return workDurationForDay(
+            firstLogOfDay = firstLogOfDay(date),
+            lastLogOfMorning = lastLogOfMorning(date),
+            firstLogOfAfternoon = firstLogOfAfternoon(date),
+            lastLogOfDay = lastLogOfDay(date)
+        )
     }
 
-    fun averageWorkDurationPerDay(since: Date): Duration {
-        TODO()
+    fun workDurationForWeek(dayIncludedInWeek: Date): Duration {
+        var duration = 0.minutes
+        var day = dayIncludedInWeek
+        // Rewind to first non weekend day
+        while (day.isWeekend) day -= 1.days
+
+        // Rewind the whole week
+        while (!day.isWeekend) {
+            val firstLogOfDay = firstLogOfDay(day)
+            val lastLogOfMorning = lastLogOfMorning(day)
+            val firstLogOfAfternoon = firstLogOfAfternoon(day)
+            val lastLogOfDay = lastLogOfDay(day)
+            duration += workDurationForDay(firstLogOfDay, lastLogOfMorning, firstLogOfAfternoon, lastLogOfDay)
+
+            day -= 1.days
+        }
+
+        return duration
     }
+
+    fun averageWorkDurationPerDay(startDate: Date, endDate: Date): AverageWorkDurationPerDayResults {
+        var day = endDate
+        var totalDuration = 0.minutes
+        var nbDays = 0
+        var earliestDay: Date? = null
+        // Rewind to first non weekend day
+        while (day.isWeekend) day -= 1.days
+        while (day >= startDate) {
+            val workDurationForDay = workDurationForDay(day)
+
+            // Discard invalid days
+            if (workDurationForDay < configuration.validDayMinimumDuration) {
+                day -= 1.days
+                // Rewind to first non weekend day
+                while (day.isWeekend) day -= 1.days
+                continue
+            }
+
+            totalDuration += workDurationForDay
+            earliestDay = day
+
+            nbDays++
+            day -= 1.days
+            // Rewind to first non weekend day
+            while (day.isWeekend) day -= 1.days
+        }
+        return AverageWorkDurationPerDayResults(
+            averageWorkDurationPerDay = totalDuration / nbDays,
+            numberOfWorkingDays = nbDays,
+            earliestDay = earliestDay
+        )
+    }
+
+    data class AverageWorkDurationPerDayResults(
+        val averageWorkDurationPerDay: Duration,
+        val numberOfWorkingDays: Int,
+        val earliestDay: Date?
+    )
 }

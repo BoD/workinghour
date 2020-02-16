@@ -27,12 +27,15 @@ package org.jraf.workinghour.conf
 
 import org.jraf.workinghour.datetime.Time
 import java.io.File
+import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
-data class Configuration @ExperimentalTime constructor(
+@ExperimentalTime
+data class Configuration(
     val databaseFile: File,
     val startOfDay: Time,
     val endOfMorning: Time,
     val startOfAfternoon: Time,
-    val endOfDay: Time
+    val endOfDay: Time,
+    val validDayMinimumDuration: Duration
 )
