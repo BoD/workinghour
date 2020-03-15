@@ -96,12 +96,12 @@ private fun displayStats(db: Database) {
         val lastLogOfDay = db.lastLogOfDay(date)
         val workDurationForDate = db.workDurationForDay(firstLogOfDay, lastLogOfMorning, firstLogOfAfternoon, lastLogOfDay)
         println(
-            "$formattedWeekDay:"
-                    + "  ${workDurationForDate.formatHourMinutes()}"
-                    + "  🛬 ${firstLogOfDay?.toFormattedString()}"
-                    + "  🔜 ${lastLogOfMorning?.toFormattedString()}"
-                    + "  🔙 ${firstLogOfAfternoon?.toFormattedString()}"
-                    + "  🛫 ${lastLogOfDay?.toFormattedString()}"
+            "$formattedWeekDay:".padEnd(11)
+                    + workDurationForDate.formatHourMinutes().padEnd(8)
+                    + (firstLogOfDay?.toFormattedString() ?: "?")
+                    + " - ${lastLogOfMorning?.toFormattedString() ?: "?"}"
+                    + "  ${firstLogOfAfternoon?.toFormattedString() ?: "?"}"
+                    + " - ${lastLogOfDay?.toFormattedString() ?: "?"}"
         )
     }
 
@@ -111,7 +111,12 @@ private fun displayStats(db: Database) {
     var day = todayNow.date
     for (i in 0..4) {
         val workDurationForWeek = db.workDurationForWeek(day)
-        println("$i weeks ago:  ${workDurationForWeek.formatHourMinutes()}")
+        val weekAgoStr = when (i) {
+            0 -> "This week:"
+            1 -> "Last week:"
+            else -> "$i weeks ago:"
+        }.padEnd(12)
+        println("$weekAgoStr ${workDurationForWeek.formatHourMinutes()}")
         day -= 7.days
     }
 
