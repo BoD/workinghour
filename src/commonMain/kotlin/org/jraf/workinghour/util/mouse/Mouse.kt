@@ -23,19 +23,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.jraf.workinghour.conf
+package org.jraf.workinghour.util.mouse
 
-import org.jraf.workinghour.datetime.Time
-import java.io.File
-import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
+data class MouseLocation(val x: Int, val y: Int)
 
-@ExperimentalTime
-data class Configuration(
-    val databaseFile: File,
-    val startOfDay: Time,
-    val endOfMorning: Time,
-    val startOfAfternoon: Time,
-    val endOfDay: Time,
-    val validDayMinimumDuration: Duration
-)
+expect fun getMouseLocation(): MouseLocation

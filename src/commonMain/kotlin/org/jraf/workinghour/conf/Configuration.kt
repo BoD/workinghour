@@ -23,29 +23,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.jraf.workinghour.datetime
+package org.jraf.workinghour.conf
 
-import java.util.Calendar
+import org.jraf.workinghour.datetime.Time
 import kotlin.time.Duration
 
-actual operator fun DateTime.plus(duration: Duration): DateTime {
-    return asCalendar().apply { add(Calendar.MINUTE, duration.inMinutes.toInt()) }.asDateTime()
-}
-
-private fun DateTime.asCalendar(): Calendar = Calendar.getInstance().apply {
-    set(Calendar.YEAR, date.year.year)
-    set(Calendar.MONTH, date.month.ordinal)
-    set(Calendar.DAY_OF_MONTH, date.day.dayOfMonth)
-    set(Calendar.HOUR_OF_DAY, this@asCalendar.time.hour.hour)
-    set(Calendar.MINUTE, this@asCalendar.time.minutes.minutes)
-    set(Calendar.SECOND, 0)
-    set(Calendar.MILLISECOND, 0)
-}
-
-private fun Calendar.asDateTime() = DateTime.build(
-    year = get(Calendar.YEAR),
-    month = get(Calendar.MONTH),
-    day = get(Calendar.DAY_OF_MONTH),
-    hour = get(Calendar.HOUR_OF_DAY),
-    minutes = get(Calendar.MINUTE)
+data class Configuration(
+    val databasePath: String,
+    val startOfDay: Time,
+    val endOfMorning: Time,
+    val startOfAfternoon: Time,
+    val endOfDay: Time,
+    val validDayMinimumDuration: Duration
 )

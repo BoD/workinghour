@@ -29,16 +29,16 @@ import org.jraf.workinghour.conf.Configuration
 import org.jraf.workinghour.datetime.Date
 import org.jraf.workinghour.datetime.DateTime
 import org.jraf.workinghour.datetime.Time
+import org.jraf.workinghour.datetime.isWeekend
+import java.io.File
 import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 import kotlin.time.days
 import kotlin.time.minutes
 
-@ExperimentalTime
 class Database(
     private val configuration: Configuration
 ) {
-    private val sqliteDatabase = SqliteDatabase(configuration.databaseFile)
+    private val sqliteDatabase = SqliteDatabase(File(configuration.databasePath))
 
     fun logActive(dateTime: DateTime) {
         // Ignore weekends

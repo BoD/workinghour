@@ -33,10 +33,8 @@ import org.jraf.workinghour.activitydetection.ActivityDetector
 import org.jraf.workinghour.datetime.DateTime
 import org.jraf.workinghour.db.Database
 import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 import kotlin.time.minutes
 
-@ExperimentalTime
 class Daemon(
     private val database: Database,
     private val activityMonitoringPeriod: Duration = DEFAULT_ACTIVITY_MONITORING_PERIOD

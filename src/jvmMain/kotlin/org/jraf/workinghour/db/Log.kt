@@ -26,9 +26,7 @@
 package org.jraf.workinghour.db
 
 import org.jraf.workinghour.datetime.DateTime
-import kotlin.time.ExperimentalTime
 
-@ExperimentalTime
 data class Log(
     val id: LogId,
     val logType: LogType,

@@ -38,9 +38,7 @@ import java.io.File
 import java.sql.DriverManager
 import java.sql.PreparedStatement
 import java.sql.ResultSet
-import kotlin.time.ExperimentalTime
 
-@ExperimentalTime
 class SqliteDatabase(
     private val databaseFile: File
 ) {

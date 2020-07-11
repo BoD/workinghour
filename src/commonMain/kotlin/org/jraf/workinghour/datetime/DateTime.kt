@@ -25,27 +25,31 @@
 
 package org.jraf.workinghour.datetime
 
-import java.util.Calendar
 import kotlin.time.Duration
 
-actual operator fun DateTime.plus(duration: Duration): DateTime {
-    return asCalendar().apply { add(Calendar.MINUTE, duration.inMinutes.toInt()) }.asDateTime()
+data class DateTime(
+    val date: Date,
+    val time: Time
+) {
+
+    operator fun minus(duration: Duration) = plus(-duration)
+
+    companion object {
+        fun todayNow(): DateTime =
+            DateTime(
+                Date.today(),
+                Time.now()
+            )
+
+        fun build(year: Int, month: Int, day: Int, hour: Int, minutes: Int) =
+            DateTime(
+                Date.build(
+                    year,
+                    month,
+                    day
+                ), Time.build(hour, minutes)
+            )
+    }
 }
 
-private fun DateTime.asCalendar(): Calendar = Calendar.getInstance().apply {
-    set(Calendar.YEAR, date.year.year)
-    set(Calendar.MONTH, date.month.ordinal)
-    set(Calendar.DAY_OF_MONTH, date.day.dayOfMonth)
-    set(Calendar.HOUR_OF_DAY, this@asCalendar.time.hour.hour)
-    set(Calendar.MINUTE, this@asCalendar.time.minutes.minutes)
-    set(Calendar.SECOND, 0)
-    set(Calendar.MILLISECOND, 0)
-}
-
-private fun Calendar.asDateTime() = DateTime.build(
-    year = get(Calendar.YEAR),
-    month = get(Calendar.MONTH),
-    day = get(Calendar.DAY_OF_MONTH),
-    hour = get(Calendar.HOUR_OF_DAY),
-    minutes = get(Calendar.MINUTE)
-)
+expect operator fun DateTime.plus(duration: Duration): DateTime

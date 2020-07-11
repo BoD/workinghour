@@ -24,10 +24,16 @@ kotlin {
     jvm()
 
     sourceSets {
+        all {
+            languageSettings.enableLanguageFeature("InlineClasses")
+            languageSettings.useExperimentalAnnotation("kotlin.time.ExperimentalTime")
+            languageSettings.useExperimentalAnnotation("kotlin.ExperimentalStdlibApi")
+        }
+
         commonMain {
             dependencies {
                 implementation(kotlin("stdlib-common"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$versionsCoroutine")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-common:$versionsCoroutine")
             }
         }
         commonTest {

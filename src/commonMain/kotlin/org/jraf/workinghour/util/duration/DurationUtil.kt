@@ -26,9 +26,7 @@
 package org.jraf.workinghour.util.duration
 
 import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 
-@ExperimentalTime
 fun Duration.formatHourMinutes(): String {
     val totalMinutes = inMinutes.toInt()
     val hours = totalMinutes / 60
@@ -36,6 +34,6 @@ fun Duration.formatHourMinutes(): String {
     return when {
         hours == 0 -> "${remainMinutes}m"
         remainMinutes == 0 -> "${hours}h"
-        else -> "${hours}h${remainMinutes}m".format(hours, remainMinutes)
+        else -> "${hours}h${remainMinutes}m"
     }
 }

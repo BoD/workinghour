@@ -32,24 +32,22 @@ import org.jraf.workinghour.conf.Configuration
 import org.jraf.workinghour.daemon.Daemon
 import org.jraf.workinghour.datetime.DateTime
 import org.jraf.workinghour.datetime.Time
+import org.jraf.workinghour.datetime.isWeekend
+import org.jraf.workinghour.datetime.plus
+import org.jraf.workinghour.datetime.toFormattedString
+import org.jraf.workinghour.datetime.toFormattedWeekDay
 import org.jraf.workinghour.db.Database
-import org.jraf.workinghour.db.legacy.LegacySqliteDatabase
 import org.jraf.workinghour.util.ansi.ANSI_CLEAR_SCREEN
 import org.jraf.workinghour.util.duration.formatHourMinutes
-import java.io.File
 import kotlin.random.Random
 import kotlin.random.nextInt
-import kotlin.time.ExperimentalTime
 import kotlin.time.days
 import kotlin.time.hours
 import kotlin.time.minutes
 
-@ExperimentalTime
 private val configuration by lazy {
     Configuration(
-        databaseFile = File(
-            "workinghour.db"
-        ),
+        databasePath = "workinghour.db",
         startOfDay = Time.build(8, 30),
         endOfMorning = Time.build(13, 0),
         startOfAfternoon = Time.build(13, 0),
@@ -58,8 +56,6 @@ private val configuration by lazy {
     )
 }
 
-@ExperimentalStdlibApi
-@ExperimentalTime
 fun main() {
     println("Hello, World!")
     val db = Database(configuration)
@@ -76,8 +72,6 @@ fun main() {
     waitForever()
 }
 
-@ExperimentalStdlibApi
-@ExperimentalTime
 private fun displayStats(db: Database) {
     // Clear screen
     print(ANSI_CLEAR_SCREEN)
@@ -143,13 +137,6 @@ private fun waitForever() {
     }
 }
 
-@ExperimentalTime
-fun migrateLegacyDb(legacyDbFile: File, db: Database) {
-    val legacySqliteDatabase = LegacySqliteDatabase(legacyDbFile, db)
-    legacySqliteDatabase.logEverything()
-}
-
-@ExperimentalTime
 private fun createTestDb(db: Database) {
     val todayNow = DateTime.todayNow()
     val random = Random(System.currentTimeMillis())

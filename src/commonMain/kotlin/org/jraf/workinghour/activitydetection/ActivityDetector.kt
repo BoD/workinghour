@@ -29,12 +29,10 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.awt.MouseInfo
-import java.awt.Point
+import org.jraf.workinghour.util.mouse.MouseLocation
+import org.jraf.workinghour.util.mouse.getMouseLocation
 import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 
-@ExperimentalTime
 class ActivityDetector(
     private val monitoringPeriod: Duration
 ) {
@@ -45,7 +43,7 @@ class ActivityDetector(
         private set
 
     private var mouseMonitoringJob: Job? = null
-    private var latestMouseLocation: Point? = null
+    private var latestMouseLocation: MouseLocation? = null
 
     fun start(): Boolean {
         if (started) return false
@@ -64,7 +62,7 @@ class ActivityDetector(
     private fun startMonitoringMouse() {
         mouseMonitoringJob = GlobalScope.launch {
             while (true) {
-                val newMouseLocation = MouseInfo.getPointerInfo().location
+                val newMouseLocation = getMouseLocation()
                 isActive = newMouseLocation != latestMouseLocation
                 latestMouseLocation = newMouseLocation
 

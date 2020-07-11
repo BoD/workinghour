@@ -26,53 +26,13 @@
 package org.jraf.workinghour.datetime
 
 import java.util.Calendar
-import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
-import kotlin.time.minutes
 
-@ExperimentalTime
-data class Time(
-    val hour: Hour,
-    val minutes: Minutes
-) {
-    init {
-        if (!hour.isValid) throw IllegalArgumentException("Invalid hour")
-        if (!minutes.isValid) throw IllegalArgumentException("Invalid minutes")
-    }
+actual fun Time.toFormattedString(): String = "%1\$d:%2\$02d".format(hour.hour, minutes.minutes)
 
-    operator fun compareTo(other: Time) = if (hour == other.hour) {
-        minutes.compareTo(other.minutes)
-    } else {
-        hour.compareTo(other.hour)
-    }
-
-    operator fun minus(other: Time): Duration {
-        return ((hour.hour * 60 + minutes.minutes) - (other.hour.hour * 60 + other.minutes.minutes)).minutes
-    }
-
-    fun toFormattedString() = "%1\$d:%2\$02d".format(hour.hour, minutes.minutes)
-
-    companion object {
-        fun now(): Time {
-            val nowCalendar = Calendar.getInstance()
-            return Time(
-                hour = Hour(nowCalendar[Calendar.HOUR_OF_DAY]),
-                minutes = Minutes(nowCalendar[Calendar.MINUTE])
-            )
-        }
-
-        fun build(hour: Int, minutes: Int) = Time(Hour(hour), Minutes(minutes))
-    }
-}
-
-inline class Hour(val hour: Int) {
-    val isValid get() = hour in 0..23
-
-    operator fun compareTo(other: Hour) = hour.compareTo(other.hour)
-}
-
-inline class Minutes(val minutes: Int) {
-    val isValid get() = minutes in 0..59
-
-    operator fun compareTo(other: Minutes) = minutes.compareTo(other.minutes)
+actual fun Time.Companion.now(): Time {
+    val nowCalendar = Calendar.getInstance()
+    return Time(
+        hour = Hour(nowCalendar[Calendar.HOUR_OF_DAY]),
+        minutes = Minutes(nowCalendar[Calendar.MINUTE])
+    )
 }

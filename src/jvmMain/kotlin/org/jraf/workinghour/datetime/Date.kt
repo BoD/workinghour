@@ -29,106 +29,43 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 
-@ExperimentalTime
-data class Date(
-    val year: Year,
-    val month: Month,
-    val day: DayOfMonth
-) {
-    val isWeekend: Boolean
-
-    init {
-        if (!day.isValid) throw IllegalArgumentException("Invalid day of month")
+actual val Date.isWeekend: Boolean
+    get() {
         val dayOfWeek = asCalendar()[Calendar.DAY_OF_WEEK]
-        isWeekend = dayOfWeek == Calendar.SATURDAY || dayOfWeek == Calendar.SUNDAY
+        return dayOfWeek == Calendar.SATURDAY || dayOfWeek == Calendar.SUNDAY
     }
 
-    operator fun plus(duration: Duration): Date {
-        return asCalendar().apply { add(Calendar.MINUTE, duration.inMinutes.toInt()) }.asDate()
-    }
-
-    operator fun minus(duration: Duration) = plus(-duration)
-
-    private fun asCalendar(): Calendar = Calendar.getInstance().apply {
-        set(Calendar.YEAR, year.year)
-        set(Calendar.MONTH, month.ordinal)
-        set(Calendar.DAY_OF_MONTH, day.dayOfMonth)
-        set(Calendar.HOUR_OF_DAY, 0)
-        set(Calendar.MINUTE, 0)
-        set(Calendar.SECOND, 0)
-        set(Calendar.MILLISECOND, 0)
-    }
-
-    operator fun compareTo(other: Date) = if (year == other.year) {
-        if (month == other.month) {
-            day.compareTo(other.day)
-        } else {
-            month.compareTo(other.month)
-        }
-    } else {
-        year.compareTo(other.year)
-    }
-
-    fun toFormattedWeekDay(): String = WEEK_DAY_FORMAT.format(asCalendar().time)
-
-    @ExperimentalStdlibApi
-    fun toFormattedFullDate(): String {
-        val formattedMonth = month.toFormattedString()
-        return "$formattedMonth ${day.dayOfMonth} ${year.year}"
-    }
-
-    companion object {
-        private val WEEK_DAY_FORMAT = SimpleDateFormat("EEEE")
-
-        fun today(): Date {
-            val nowCalendar = Calendar.getInstance()
-            return Date(
-                year = Year(nowCalendar[Calendar.YEAR]),
-                month = Month.values()[nowCalendar[Calendar.MONTH]],
-                day = DayOfMonth(nowCalendar[Calendar.DAY_OF_MONTH])
-            )
-        }
-
-        fun build(year: Int, month: Int, day: Int) = Date(Year(year), Month.values()[month], DayOfMonth(day))
-    }
-
+private fun Date.asCalendar(): Calendar = Calendar.getInstance().apply {
+    set(Calendar.YEAR, year.year)
+    set(Calendar.MONTH, month.ordinal)
+    set(Calendar.DAY_OF_MONTH, day.dayOfMonth)
+    set(Calendar.HOUR_OF_DAY, 0)
+    set(Calendar.MINUTE, 0)
+    set(Calendar.SECOND, 0)
+    set(Calendar.MILLISECOND, 0)
 }
 
-@ExperimentalTime
+actual operator fun Date.plus(duration: Duration): Date {
+    return asCalendar().apply { add(Calendar.MINUTE, duration.inMinutes.toInt()) }.asDate()
+}
+
 private fun Calendar.asDate() = Date.build(
     year = get(Calendar.YEAR),
     month = get(Calendar.MONTH),
     day = get(Calendar.DAY_OF_MONTH)
 )
 
-inline class Year(val year: Int) {
-    operator fun compareTo(other: Year) = year.compareTo(other.year)
+private val WEEK_DAY_FORMAT = SimpleDateFormat("EEEE")
+
+actual fun Date.toFormattedWeekDay(): String = WEEK_DAY_FORMAT.format(asCalendar().time)
+actual fun Date.Companion.today(): Date {
+    val nowCalendar = Calendar.getInstance()
+    return Date(
+        year = Year(nowCalendar[Calendar.YEAR]),
+        month = Month.values()[nowCalendar[Calendar.MONTH]],
+        day = DayOfMonth(nowCalendar[Calendar.DAY_OF_MONTH])
+    )
 }
 
-enum class Month {
-    JANUARY,
-    FEBRUARY,
-    MARCH,
-    APRIL,
-    MAY,
-    JUNE,
-    JULY,
-    AUGUST,
-    SEPTEMBER,
-    OCTOBER,
-    NOVEMBER,
-    DECEMBER;
-
-    @ExperimentalStdlibApi
-    fun toFormattedString() = toString().toLowerCase(Locale.US).capitalize(Locale.US)
-
-    companion object
-}
-
-inline class DayOfMonth(val dayOfMonth: Int) {
-    val isValid get() = dayOfMonth in 1..31
-
-    operator fun compareTo(other: DayOfMonth) = dayOfMonth.compareTo(other.dayOfMonth)
-}
+actual fun Month.toFormattedString(): String = toString().toLowerCase(Locale.US).capitalize(Locale.US)
