@@ -1,11 +1,10 @@
 plugins {
-    kotlin("jvm") version "1.3.70"
-    id("application")
+    kotlin("multiplatform") version "1.3.72"
     id("com.github.ben-manes.versions") version "0.28.0"
 }
 
 group = "org.jraf"
-version = "2.0.0"
+version = "2.1.0"
 
 repositories {
     mavenLocal()
@@ -13,33 +12,40 @@ repositories {
 }
 
 tasks {
-    compileKotlin {
-        kotlinOptions {
-            jvmTarget = "1.8"
-            freeCompilerArgs = listOf("-Xinline-classes")
-        }
-    }
-
-    compileTestKotlin {
-        kotlinOptions.jvmTarget = "1.8"
-    }
-
     wrapper {
         distributionType = Wrapper.DistributionType.ALL
-        gradleVersion = "6.2.2"
+        gradleVersion = "6.5.1"
     }
 }
 
-application {
-    mainClassName = "org.jraf.workinghour.main.MainKt"
-}
+val versionsCoroutine = "1.3.7"
 
-val versionsCoroutine = "1.3.4"
+kotlin {
+    jvm()
 
-dependencies {
-    implementation(kotlin("stdlib-jdk8"))
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$versionsCoroutine")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$versionsCoroutine")
-    implementation("org.xerial:sqlite-jdbc:3.30.1")
-    implementation("com.googlecode.log4jdbc:log4jdbc:1.2")
+    sourceSets {
+        commonMain {
+            dependencies {
+                implementation(kotlin("stdlib-common"))
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$versionsCoroutine")
+            }
+        }
+        commonTest {
+            dependencies {
+                implementation(kotlin("test-common"))
+                implementation(kotlin("test-annotations-common"))
+            }
+        }
+
+        sourceSets["jvmMain"].dependencies {
+            implementation(kotlin("stdlib-jdk8"))
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$versionsCoroutine")
+            implementation("org.xerial:sqlite-jdbc:3.32.3")
+            implementation("com.googlecode.log4jdbc:log4jdbc:1.2")
+        }
+        sourceSets["jvmTest"].dependencies {
+            implementation(kotlin("test"))
+            implementation(kotlin("test-junit"))
+        }
+    }
 }
