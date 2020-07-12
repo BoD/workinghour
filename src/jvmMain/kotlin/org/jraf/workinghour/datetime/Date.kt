@@ -25,16 +25,33 @@
 
 package org.jraf.workinghour.datetime
 
-import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Locale
 import kotlin.time.Duration
 
-actual val Date.isWeekend: Boolean
-    get() {
-        val dayOfWeek = asCalendar()[Calendar.DAY_OF_WEEK]
-        return dayOfWeek == Calendar.SATURDAY || dayOfWeek == Calendar.SUNDAY
+actual operator fun Date.plus(duration: Duration): Date {
+    return asCalendar().apply { add(Calendar.MINUTE, duration.inMinutes.toInt()) }.asDate()
+}
+
+actual fun Date.Companion.today(): Date {
+    val nowCalendar = Calendar.getInstance()
+    return Date(
+        year = Year(nowCalendar[Calendar.YEAR]),
+        month = Month.values()[nowCalendar[Calendar.MONTH]],
+        day = DayOfMonth(nowCalendar[Calendar.DAY_OF_MONTH])
+    )
+}
+
+actual val Date.weekDay: WeekDay
+    get() = when (asCalendar()[Calendar.DAY_OF_WEEK]) {
+        Calendar.MONDAY -> WeekDay.MONDAY
+        Calendar.TUESDAY -> WeekDay.TUESDAY
+        Calendar.WEDNESDAY -> WeekDay.WEDNESDAY
+        Calendar.THURSDAY -> WeekDay.THURSDAY
+        Calendar.FRIDAY -> WeekDay.FRIDAY
+        Calendar.SATURDAY -> WeekDay.SATURDAY
+        else -> WeekDay.SUNDAY
     }
+
 
 private fun Date.asCalendar(): Calendar = Calendar.getInstance().apply {
     set(Calendar.YEAR, year.year)
@@ -46,26 +63,8 @@ private fun Date.asCalendar(): Calendar = Calendar.getInstance().apply {
     set(Calendar.MILLISECOND, 0)
 }
 
-actual operator fun Date.plus(duration: Duration): Date {
-    return asCalendar().apply { add(Calendar.MINUTE, duration.inMinutes.toInt()) }.asDate()
-}
-
 private fun Calendar.asDate() = Date.build(
     year = get(Calendar.YEAR),
     month = get(Calendar.MONTH),
     day = get(Calendar.DAY_OF_MONTH)
 )
-
-private val WEEK_DAY_FORMAT = SimpleDateFormat("EEEE")
-
-actual fun Date.toFormattedWeekDay(): String = WEEK_DAY_FORMAT.format(asCalendar().time)
-actual fun Date.Companion.today(): Date {
-    val nowCalendar = Calendar.getInstance()
-    return Date(
-        year = Year(nowCalendar[Calendar.YEAR]),
-        month = Month.values()[nowCalendar[Calendar.MONTH]],
-        day = DayOfMonth(nowCalendar[Calendar.DAY_OF_MONTH])
-    )
-}
-
-actual fun Month.toFormattedString(): String = toString().toLowerCase(Locale.US).capitalize(Locale.US)

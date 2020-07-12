@@ -32,10 +32,7 @@ import org.jraf.workinghour.conf.Configuration
 import org.jraf.workinghour.daemon.Daemon
 import org.jraf.workinghour.datetime.DateTime
 import org.jraf.workinghour.datetime.Time
-import org.jraf.workinghour.datetime.isWeekend
 import org.jraf.workinghour.datetime.plus
-import org.jraf.workinghour.datetime.toFormattedString
-import org.jraf.workinghour.datetime.toFormattedWeekDay
 import org.jraf.workinghour.repository.Database
 import org.jraf.workinghour.repository.Repository
 import org.jraf.workinghour.util.ansi.ANSI_CLEAR_SCREEN
@@ -60,7 +57,7 @@ private val configuration by lazy {
 suspend fun main() {
     println("Hello, World!")
     val db = Repository(configuration, Database(configuration.databasePath))
-    val daemon = Daemon(db).apply { start() }
+    Daemon(db).apply { start() }
 
     // Display stats every minute
     GlobalScope.launch {

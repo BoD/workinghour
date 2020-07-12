@@ -47,6 +47,11 @@ data class Time(
         return ((hour.hour * 60 + minutes.minutes) - (other.hour.hour * 60 + other.minutes.minutes)).minutes
     }
 
+    fun toFormattedString(): String {
+        val mins = minutes.minutes
+        return "${hour.hour}:${if (mins < 10) "0$mins" else mins}}"
+    }
+
     companion object {
         fun build(hour: Int, minutes: Int) = Time(
             Hour(hour),
@@ -68,5 +73,3 @@ inline class Minutes(val minutes: Int) {
 
     operator fun compareTo(other: Minutes) = minutes.compareTo(other.minutes)
 }
-
-expect fun Time.toFormattedString(): String

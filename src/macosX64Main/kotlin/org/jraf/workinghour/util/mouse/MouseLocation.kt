@@ -23,14 +23,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.jraf.workinghour.datetime
+package org.jraf.workinghour.util.mouse
 
-import java.util.Calendar
-
-actual fun Time.Companion.now(): Time {
-    val nowCalendar = Calendar.getInstance()
-    return Time(
-        hour = Hour(nowCalendar[Calendar.HOUR_OF_DAY]),
-        minutes = Minutes(nowCalendar[Calendar.MINUTE])
-    )
+actual fun getMouseLocation(): MouseLocation {
+    TODO()
 }

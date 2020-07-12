@@ -22,12 +22,17 @@ val versionsCoroutine = "1.3.7"
 
 kotlin {
     jvm()
+    macosX64()
 
     sourceSets {
         all {
-            languageSettings.enableLanguageFeature("InlineClasses")
-            languageSettings.useExperimentalAnnotation("kotlin.time.ExperimentalTime")
-            languageSettings.useExperimentalAnnotation("kotlin.ExperimentalStdlibApi")
+            languageSettings.apply {
+                enableLanguageFeature("InlineClasses")
+                useExperimentalAnnotation("kotlin.time.ExperimentalTime")
+                useExperimentalAnnotation("kotlin.ExperimentalStdlibApi")
+                useExperimentalAnnotation("kotlin.ExperimentalUnsignedTypes")
+                progressiveMode = true
+            }
         }
 
         commonMain {
@@ -43,15 +48,30 @@ kotlin {
             }
         }
 
-        sourceSets["jvmMain"].dependencies {
-            implementation(kotlin("stdlib-jdk8"))
-            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$versionsCoroutine")
-            implementation("org.xerial:sqlite-jdbc:3.32.3")
-            implementation("com.googlecode.log4jdbc:log4jdbc:1.2")
+        jvm().compilations["main"].defaultSourceSet {
+            dependencies {
+                implementation(kotlin("stdlib-jdk8"))
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$versionsCoroutine")
+                implementation("org.xerial:sqlite-jdbc:3.32.3")
+                implementation("com.googlecode.log4jdbc:log4jdbc:1.2")
+            }
         }
-        sourceSets["jvmTest"].dependencies {
-            implementation(kotlin("test"))
-            implementation(kotlin("test-junit"))
+        jvm().compilations["test"].defaultSourceSet {
+            dependencies {
+                implementation(kotlin("test"))
+                implementation(kotlin("test-junit"))
+            }
         }
+
+        macosX64().compilations["main"].defaultSourceSet {
+            dependencies {
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-native:$versionsCoroutine")
+            }
+        }
+//        macosX64().compilations["test"].defaultSourceSet {
+//            dependencies {
+//                implementation(kotlin("test"))
+//            }
+//        }
     }
 }

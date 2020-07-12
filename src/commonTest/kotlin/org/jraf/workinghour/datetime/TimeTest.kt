@@ -25,12 +25,11 @@
 
 package org.jraf.workinghour.datetime
 
-import java.util.Calendar
+import kotlin.test.Test
 
-actual fun Time.Companion.now(): Time {
-    val nowCalendar = Calendar.getInstance()
-    return Time(
-        hour = Hour(nowCalendar[Calendar.HOUR_OF_DAY]),
-        minutes = Minutes(nowCalendar[Calendar.MINUTE])
-    )
+class TimeTest {
+    @Test
+    fun `exercise now`() {
+        println(Time.now())
+    }
 }

@@ -29,7 +29,6 @@ import org.jraf.workinghour.conf.Configuration
 import org.jraf.workinghour.datetime.Date
 import org.jraf.workinghour.datetime.DateTime
 import org.jraf.workinghour.datetime.Time
-import org.jraf.workinghour.datetime.isWeekend
 import kotlin.time.Duration
 import kotlin.time.days
 import kotlin.time.minutes

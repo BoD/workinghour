@@ -32,6 +32,7 @@ data class Date(
     val month: Month,
     val day: DayOfMonth
 ) {
+    val isWeekend = weekDay.isWeekend
 
     init {
         if (!day.isValid) throw IllegalArgumentException("Invalid day of month")
@@ -54,7 +55,13 @@ data class Date(
         return "$formattedMonth ${day.dayOfMonth} ${year.year}"
     }
 
+    fun toFormattedWeekDay(): String = weekDay.toFormattedString()
+
     companion object {
+        /**
+         * [month] is 0 based
+         * [day] is 1 based (1..31)
+         */
         fun build(year: Int, month: Int, day: Int) = Date(
             Year(year),
             Month.values()[month],
@@ -63,11 +70,7 @@ data class Date(
     }
 }
 
-expect val Date.isWeekend: Boolean
-
 expect operator fun Date.plus(duration: Duration): Date
-
-expect fun Date.toFormattedWeekDay(): String
 
 expect fun Date.Companion.today(): Date
 
@@ -91,13 +94,29 @@ enum class Month {
     DECEMBER,
     ;
 
+    fun toFormattedString() = toString().toLowerCase().capitalize()
+
     companion object
 }
-
-expect fun Month.toFormattedString(): String
 
 inline class DayOfMonth(val dayOfMonth: Int) {
     val isValid get() = dayOfMonth in 1..31
 
     operator fun compareTo(other: DayOfMonth) = dayOfMonth.compareTo(other.dayOfMonth)
 }
+
+enum class WeekDay(val isWeekend: Boolean) {
+    MONDAY(false),
+    TUESDAY(false),
+    WEDNESDAY(false),
+    THURSDAY(false),
+    FRIDAY(false),
+    SATURDAY(true),
+    SUNDAY(true),
+    ;
+
+
+    fun toFormattedString() = toString().toLowerCase().capitalize()
+}
+
+expect val Date.weekDay: WeekDay

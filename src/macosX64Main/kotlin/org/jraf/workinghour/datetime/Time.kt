@@ -25,12 +25,18 @@
 
 package org.jraf.workinghour.datetime
 
-import java.util.Calendar
+import platform.Foundation.NSCalendarUnitHour
+import platform.Foundation.NSCalendarUnitMinute
+import platform.Foundation.NSDate
+import platform.Foundation.date
 
 actual fun Time.Companion.now(): Time {
-    val nowCalendar = Calendar.getInstance()
-    return Time(
-        hour = Hour(nowCalendar[Calendar.HOUR_OF_DAY]),
-        minutes = Minutes(nowCalendar[Calendar.MINUTE])
+    val nsDate = NSDate.date()
+    val calendar = getNSCalendar()
+    val components = calendar.components(NSCalendarUnitHour or NSCalendarUnitMinute, nsDate)
+    return build(
+        hour = components.hour.toInt(),
+        minutes = components.minute.toInt()
     )
 }
+

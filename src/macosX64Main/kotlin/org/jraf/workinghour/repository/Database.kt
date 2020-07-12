@@ -23,14 +23,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.jraf.workinghour.datetime
+package org.jraf.workinghour.repository
 
-import java.util.Calendar
+import org.jraf.workinghour.datetime.Date
+import org.jraf.workinghour.datetime.DateTime
 
-actual fun Time.Companion.now(): Time {
-    val nowCalendar = Calendar.getInstance()
-    return Time(
-        hour = Hour(nowCalendar[Calendar.HOUR_OF_DAY]),
-        minutes = Minutes(nowCalendar[Calendar.MINUTE])
-    )
+actual class Database actual constructor(databasePath: String) {
+    actual fun insertLog(logType: LogType, dateTime: DateTime) {
+        TODO()
+    }
+
+    actual fun updateLogDateTime(logId: LogId, dateTime: DateTime) {
+        TODO()
+    }
+
+    actual fun firstLogOfDay(date: Date): Log? {
+        TODO()
+    }
+
+    actual fun lastLogOfDay(date: Date): Log? {
+        TODO()
+    }
+
+    actual fun lastLogOfMorning(date: Date): Log? {
+        TODO()
+    }
+
+    actual fun firstLogOfAfternoon(date: Date): Log? {
+        TODO()
+    }
 }
