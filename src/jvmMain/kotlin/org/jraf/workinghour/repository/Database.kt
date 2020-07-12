@@ -23,7 +23,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.jraf.workinghour.db
+package org.jraf.workinghour.repository
 
 import org.jraf.workinghour.datetime.Date
 import org.jraf.workinghour.datetime.DateTime
@@ -39,9 +39,8 @@ import java.sql.DriverManager
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 
-class SqliteDatabase(
-    private val databaseFile: File
-) {
+actual class Database actual constructor(databasePath: String) {
+    private val databaseFile = File(databasePath)
 
     private val connection by lazy {
         Class.forName("net.sf.log4jdbc.DriverSpy")
@@ -109,7 +108,7 @@ class SqliteDatabase(
     }
 
     @Synchronized
-    fun insertLog(logType: LogType, dateTime: DateTime) {
+    actual fun insertLog(logType: LogType, dateTime: DateTime) {
         insertEventStatement.intParams(
             logType.dbRepresentation,
             dateTime.date.year.year,
@@ -121,7 +120,7 @@ class SqliteDatabase(
     }
 
     @Synchronized
-    fun updateLogDateTime(logId: LogId, dateTime: DateTime) {
+    actual fun updateLogDateTime(logId: LogId, dateTime: DateTime) {
         updateLogDateTimeStatement.intParams(
             dateTime.date.year.year,
             dateTime.date.month.dbRepresentation,
@@ -133,16 +132,16 @@ class SqliteDatabase(
     }
 
     @Synchronized
-    fun firstLogOfDay(date: Date): Log? = logOfDayWithType(date, LogType.FIRST_OF_DAY)
+    actual fun firstLogOfDay(date: Date): Log? = logOfDayWithType(date, LogType.FIRST_OF_DAY)
 
     @Synchronized
-    fun lastLogOfDay(date: Date): Log? = logOfDayWithType(date, LogType.LAST_OF_DAY)
+    actual fun lastLogOfDay(date: Date): Log? = logOfDayWithType(date, LogType.LAST_OF_DAY)
 
     @Synchronized
-    fun lastLogOfMorning(date: Date): Log? = logOfDayWithType(date, LogType.LAST_OF_MORNING)
+    actual fun lastLogOfMorning(date: Date): Log? = logOfDayWithType(date, LogType.LAST_OF_MORNING)
 
     @Synchronized
-    fun firstLogOfAfternoon(date: Date): Log? = logOfDayWithType(date, LogType.FIRST_OF_AFTERNOON)
+    actual fun firstLogOfAfternoon(date: Date): Log? = logOfDayWithType(date, LogType.FIRST_OF_AFTERNOON)
 
     private fun logOfDayWithType(date: Date, logType: LogType): Log? {
         val resultSet = selectLogOfDayWithTypeStatement.intParams(

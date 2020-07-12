@@ -23,23 +23,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.jraf.workinghour.db
+package org.jraf.workinghour.repository
 
 import org.jraf.workinghour.conf.Configuration
 import org.jraf.workinghour.datetime.Date
 import org.jraf.workinghour.datetime.DateTime
 import org.jraf.workinghour.datetime.Time
 import org.jraf.workinghour.datetime.isWeekend
-import java.io.File
 import kotlin.time.Duration
 import kotlin.time.days
 import kotlin.time.minutes
 
-class Database(
-    private val configuration: Configuration
+class Repository(
+    private val configuration: Configuration,
+    private val database: Database
 ) {
-    private val sqliteDatabase = SqliteDatabase(File(configuration.databasePath))
-
     fun logActive(dateTime: DateTime) {
         // Ignore weekends
         if (dateTime.date.isWeekend) return
@@ -57,50 +55,50 @@ class Database(
     }
 
     private fun updateFirstLogOfDay(todayNow: DateTime) {
-        val firstLogOfDay = sqliteDatabase.firstLogOfDay(todayNow.date)
-        if (firstLogOfDay == null) sqliteDatabase.insertLog(LogType.FIRST_OF_DAY, todayNow)
+        val firstLogOfDay = database.firstLogOfDay(todayNow.date)
+        if (firstLogOfDay == null) database.insertLog(LogType.FIRST_OF_DAY, todayNow)
     }
 
     private fun updateLastLogOfMorning(todayNow: DateTime, endOfMorning: Time) {
-        val lastLogOfMorning = sqliteDatabase.lastLogOfMorning(todayNow.date)
+        val lastLogOfMorning = database.lastLogOfMorning(todayNow.date)
         if (todayNow.time <= endOfMorning) {
             if (lastLogOfMorning == null) {
-                sqliteDatabase.insertLog(LogType.LAST_OF_MORNING, todayNow)
+                database.insertLog(LogType.LAST_OF_MORNING, todayNow)
             } else {
-                sqliteDatabase.updateLogDateTime(lastLogOfMorning.id, todayNow)
+                database.updateLogDateTime(lastLogOfMorning.id, todayNow)
             }
         }
     }
 
     private fun updateFirstLogOfAfternoon(todayNow: DateTime, startOfAfternoon: Time) {
-        val firstLogOfAfternoon = sqliteDatabase.firstLogOfAfternoon(todayNow.date)
-        if (firstLogOfAfternoon == null && todayNow.time >= startOfAfternoon) sqliteDatabase.insertLog(LogType.FIRST_OF_AFTERNOON, todayNow)
+        val firstLogOfAfternoon = database.firstLogOfAfternoon(todayNow.date)
+        if (firstLogOfAfternoon == null && todayNow.time >= startOfAfternoon) database.insertLog(LogType.FIRST_OF_AFTERNOON, todayNow)
     }
 
     private fun updateLastLogOfDay(todayNow: DateTime) {
-        val lastLogOfDay = sqliteDatabase.lastLogOfDay(todayNow.date)
+        val lastLogOfDay = database.lastLogOfDay(todayNow.date)
         if (lastLogOfDay == null) {
-            sqliteDatabase.insertLog(LogType.LAST_OF_DAY, todayNow)
+            database.insertLog(LogType.LAST_OF_DAY, todayNow)
         } else {
-            sqliteDatabase.updateLogDateTime(lastLogOfDay.id, todayNow)
+            database.updateLogDateTime(lastLogOfDay.id, todayNow)
         }
     }
 
 
     fun firstLogOfDay(date: Date): Time? {
-        return sqliteDatabase.firstLogOfDay(date)?.dateTime?.time
+        return database.firstLogOfDay(date)?.dateTime?.time
     }
 
     fun lastLogOfMorning(date: Date): Time? {
-        return sqliteDatabase.lastLogOfMorning(date)?.dateTime?.time
+        return database.lastLogOfMorning(date)?.dateTime?.time
     }
 
     fun firstLogOfAfternoon(date: Date): Time? {
-        return sqliteDatabase.firstLogOfAfternoon(date)?.dateTime?.time
+        return database.firstLogOfAfternoon(date)?.dateTime?.time
     }
 
     fun lastLogOfDay(date: Date): Time? {
-        return sqliteDatabase.lastLogOfDay(date)?.dateTime?.time
+        return database.lastLogOfDay(date)?.dateTime?.time
     }
 
     fun workDurationForDay(

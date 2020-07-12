@@ -23,32 +23,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.jraf.workinghour.db
+package org.jraf.workinghour.repository
 
+import org.jraf.workinghour.datetime.Date
 import org.jraf.workinghour.datetime.DateTime
 
-data class Log(
-    val id: LogId,
-    val logType: LogType,
-    val dateTime: DateTime
-)
+expect class Database(databasePath: String) {
+    fun insertLog(logType: LogType, dateTime: DateTime)
 
-inline class LogId(val id: Int)
+    fun updateLogDateTime(logId: LogId, dateTime: DateTime)
 
-enum class LogType(val dbRepresentation: Int) {
-    FIRST_OF_DAY(0),
-    LAST_OF_MORNING(1),
-    FIRST_OF_AFTERNOON(2),
-    LAST_OF_DAY(3),
-    ;
+    fun firstLogOfDay(date: Date): Log?
 
-    companion object {
-        fun fromDbRepresentation(dbRepresentation: Int): LogType = when (dbRepresentation) {
-            0 -> FIRST_OF_DAY
-            1 -> LAST_OF_MORNING
-            2 -> FIRST_OF_AFTERNOON
-            3 -> LAST_OF_DAY
-            else -> throw IllegalArgumentException("Unknown EventType $dbRepresentation")
-        }
-    }
+    fun lastLogOfDay(date: Date): Log?
+
+    fun lastLogOfMorning(date: Date): Log?
+
+    fun firstLogOfAfternoon(date: Date): Log?
 }

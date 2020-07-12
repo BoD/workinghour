@@ -31,12 +31,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jraf.workinghour.activitydetection.ActivityDetector
 import org.jraf.workinghour.datetime.DateTime
-import org.jraf.workinghour.db.Database
+import org.jraf.workinghour.repository.Repository
 import kotlin.time.Duration
 import kotlin.time.minutes
 
 class Daemon(
-    private val database: Database,
+    private val repository: Repository,
     private val activityMonitoringPeriod: Duration = DEFAULT_ACTIVITY_MONITORING_PERIOD
 ) {
     var started: Boolean = false
@@ -65,7 +65,7 @@ class Daemon(
         activityLoggingJob = GlobalScope.launch {
             while (true) {
                 val todayNow = DateTime.todayNow()
-                if (activityDetector.isActive) database.logActive(todayNow)
+                if (activityDetector.isActive) repository.logActive(todayNow)
                 delay(activityMonitoringPeriod.toLongMilliseconds())
             }
         }

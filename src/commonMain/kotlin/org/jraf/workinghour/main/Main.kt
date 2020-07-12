@@ -36,7 +36,8 @@ import org.jraf.workinghour.datetime.isWeekend
 import org.jraf.workinghour.datetime.plus
 import org.jraf.workinghour.datetime.toFormattedString
 import org.jraf.workinghour.datetime.toFormattedWeekDay
-import org.jraf.workinghour.db.Database
+import org.jraf.workinghour.repository.Database
+import org.jraf.workinghour.repository.Repository
 import org.jraf.workinghour.util.ansi.ANSI_CLEAR_SCREEN
 import org.jraf.workinghour.util.duration.formatHourMinutes
 import kotlin.random.Random
@@ -56,9 +57,9 @@ private val configuration by lazy {
     )
 }
 
-fun main() {
+suspend fun main() {
     println("Hello, World!")
-    val db = Database(configuration)
+    val db = Repository(configuration, Database(configuration.databasePath))
     val daemon = Daemon(db).apply { start() }
 
     // Display stats every minute
@@ -72,7 +73,7 @@ fun main() {
     waitForever()
 }
 
-private fun displayStats(db: Database) {
+private fun displayStats(db: Repository) {
     // Clear screen
     print(ANSI_CLEAR_SCREEN)
 
@@ -129,17 +130,13 @@ private fun displayStats(db: Database) {
     )
 }
 
-private fun waitForever() {
-    Object().let {
-        synchronized(it) {
-            it.wait()
-        }
-    }
+private suspend fun waitForever() {
+    delay(Long.MAX_VALUE)
 }
 
-private fun createTestDb(db: Database) {
+private fun createTestDb(db: Repository) {
     val todayNow = DateTime.todayNow()
-    val random = Random(System.currentTimeMillis())
+    val random = Random.Default
     for (i in 0..400) {
         val dateTime = todayNow - i.days
         db.logActive(dateTime.copy(time = Time.build(9, random.nextInt(0..49))))

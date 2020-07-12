@@ -55,8 +55,6 @@ data class Time(
     }
 }
 
-expect fun Time.toFormattedString(): String
-
 expect fun Time.Companion.now(): Time
 
 inline class Hour(val hour: Int) {
@@ -70,3 +68,5 @@ inline class Minutes(val minutes: Int) {
 
     operator fun compareTo(other: Minutes) = minutes.compareTo(other.minutes)
 }
+
+expect fun Time.toFormattedString(): String
