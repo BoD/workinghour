@@ -49,7 +49,7 @@ data class Time(
 
     fun toFormattedString(): String {
         val mins = minutes.minutes
-        return "${hour.hour}:${if (mins < 10) "0$mins" else mins}}"
+        return "${hour.hour}:${if (mins < 10) "0$mins" else mins}"
     }
 
     companion object {

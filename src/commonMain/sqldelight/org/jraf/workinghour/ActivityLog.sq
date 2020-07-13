@@ -1,0 +1,28 @@
+insertLog:
+INSERT INTO activity_log (
+    type,
+    year,
+    month,
+    day,
+    hour,
+    minute
+) VALUES (?, ?, ?, ?, ?, ?);
+
+selectLogOfDayWithType:
+SELECT id, type, year, month, day, hour, minute
+FROM activity_log
+WHERE
+year = ?
+AND month = ?
+AND day = ?
+AND type = ?;
+
+updateLogDateTime:
+UPDATE activity_log
+SET
+year = ?,
+month = ?,
+day = ?,
+hour = ?,
+minute = ?
+WHERE id = ?;

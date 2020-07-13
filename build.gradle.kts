@@ -1,6 +1,7 @@
 plugins {
     kotlin("multiplatform") version "1.3.72"
     id("com.github.ben-manes.versions") version "0.28.0"
+    id("com.squareup.sqldelight")
 }
 
 group = "org.jraf"
@@ -22,7 +23,11 @@ val versionsCoroutine = "1.3.7"
 
 kotlin {
     jvm()
-    macosX64()
+    macosX64 {
+        binaries {
+            executable {}
+        }
+    }
 
     sourceSets {
         all {
@@ -52,8 +57,9 @@ kotlin {
             dependencies {
                 implementation(kotlin("stdlib-jdk8"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$versionsCoroutine")
-                implementation("org.xerial:sqlite-jdbc:3.32.3")
-                implementation("com.googlecode.log4jdbc:log4jdbc:1.2")
+//                implementation("org.xerial:sqlite-jdbc:3.32.3")
+//                implementation("com.googlecode.log4jdbc:log4jdbc:1.2")
+                implementation("com.squareup.sqldelight:sqlite-driver:1.4.0")
             }
         }
         jvm().compilations["test"].defaultSourceSet {
@@ -66,6 +72,7 @@ kotlin {
         macosX64().compilations["main"].defaultSourceSet {
             dependencies {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-native:$versionsCoroutine")
+                implementation("com.squareup.sqldelight:native-driver:1.4.0")
             }
         }
 //        macosX64().compilations["test"].defaultSourceSet {
@@ -73,5 +80,11 @@ kotlin {
 //                implementation(kotlin("test"))
 //            }
 //        }
+    }
+}
+
+sqldelight {
+    database("SqlDelightDatabase") {
+        packageName = "org.jraf.workinghour"
     }
 }

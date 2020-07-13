@@ -25,31 +25,84 @@
 
 package org.jraf.workinghour.repository
 
+import com.squareup.sqldelight.drivers.native.NativeSqliteDriver
+import org.jraf.workinghour.SqlDelightDatabase
 import org.jraf.workinghour.datetime.Date
 import org.jraf.workinghour.datetime.DateTime
+import org.jraf.workinghour.datetime.Month
 
 actual class Database actual constructor(databasePath: String) {
+    private val sqlDelightDatabase = SqlDelightDatabase(NativeSqliteDriver(SqlDelightDatabase.Schema, databasePath).apply {
+        SqlDelightDatabase.Schema.create(this)
+    })
+
     actual fun insertLog(logType: LogType, dateTime: DateTime) {
-        TODO()
+        sqlDelightDatabase.activityLogQueries.insertLog(
+            type = logType.dbRepresentation,
+            year = dateTime.date.year.year.toLong(),
+            month = dateTime.date.month.ordinal.toLong(),
+            day = dateTime.date.day.dayOfMonth.toLong(),
+            hour = dateTime.time.hour.hour.toLong(),
+            minute = dateTime.time.minutes.minutes.toLong()
+        )
     }
 
     actual fun updateLogDateTime(logId: LogId, dateTime: DateTime) {
-        TODO()
+        sqlDelightDatabase.activityLogQueries.updateLogDateTime(
+            year = dateTime.date.year.year.toLong(),
+            month = dateTime.date.month.ordinal.toLong(),
+            day = dateTime.date.day.dayOfMonth.toLong(),
+            hour = dateTime.time.hour.hour.toLong(),
+            minute = dateTime.time.minutes.minutes.toLong(),
+            id = logId.id.toLong()
+        )
     }
 
-    actual fun firstLogOfDay(date: Date): Log? {
-        TODO()
+    actual fun firstLogOfDay(date: Date): Log? = logOfDay(date, LogType.FIRST_OF_DAY)
+
+    actual fun lastLogOfDay(date: Date): Log? = logOfDay(date, LogType.LAST_OF_DAY)
+
+    actual fun lastLogOfMorning(date: Date): Log? = logOfDay(date, LogType.LAST_OF_MORNING)
+
+    actual fun firstLogOfAfternoon(date: Date): Log? = logOfDay(date, LogType.FIRST_OF_AFTERNOON)
+
+    private fun logOfDay(date: Date, logType: LogType): Log? {
+        return sqlDelightDatabase.activityLogQueries.selectLogOfDayWithType(
+            year = date.year.year.toLong(),
+            month = date.month.dbRepresentation,
+            day = date.day.dayOfMonth.toLong(),
+            type = logType.dbRepresentation,
+            mapper = ::map
+        )
+            .executeAsOneOrNull()
     }
 
-    actual fun lastLogOfDay(date: Date): Log? {
-        TODO()
+    companion object {
+        private fun map(
+            id: Long,
+            type: Long,
+            year: Long,
+            month: Long,
+            day: Long,
+            hour: Long,
+            minute: Long
+        ): Log {
+            return Log(
+                id = LogId(id.toInt()),
+                logType = LogType.fromDbRepresentation(type),
+                dateTime = DateTime.build(
+                    year = year.toInt(),
+                    month = Month.fromDbRepresentation(month).ordinal,
+                    day = day.toInt(),
+                    hour = hour.toInt(),
+                    minutes = minute.toInt()
+                )
+            )
+        }
+
+        private fun Month.Companion.fromDbRepresentation(dbRepresentation: Long) = Month.values()[(dbRepresentation - 1).toInt()]
     }
 
-    actual fun lastLogOfMorning(date: Date): Log? {
-        TODO()
-    }
-
-    actual fun firstLogOfAfternoon(date: Date): Log? {
-        TODO()
-    }
+    private val Month.dbRepresentation: Long
+        get() = (ordinal + 1).toLong()
 }

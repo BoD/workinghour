@@ -35,19 +35,19 @@ data class Log(
 
 inline class LogId(val id: Int)
 
-enum class LogType(val dbRepresentation: Int) {
-    FIRST_OF_DAY(0),
-    LAST_OF_MORNING(1),
-    FIRST_OF_AFTERNOON(2),
-    LAST_OF_DAY(3),
+enum class LogType(val dbRepresentation: Long) {
+    FIRST_OF_DAY(0L),
+    LAST_OF_MORNING(1L),
+    FIRST_OF_AFTERNOON(2L),
+    LAST_OF_DAY(3L),
     ;
 
     companion object {
-        fun fromDbRepresentation(dbRepresentation: Int): LogType = when (dbRepresentation) {
-            0 -> FIRST_OF_DAY
-            1 -> LAST_OF_MORNING
-            2 -> FIRST_OF_AFTERNOON
-            3 -> LAST_OF_DAY
+        fun fromDbRepresentation(dbRepresentation: Long): LogType = when (dbRepresentation) {
+            0L -> FIRST_OF_DAY
+            1L -> LAST_OF_MORNING
+            2L -> FIRST_OF_AFTERNOON
+            3L -> LAST_OF_DAY
             else -> throw IllegalArgumentException("Unknown EventType $dbRepresentation")
         }
     }

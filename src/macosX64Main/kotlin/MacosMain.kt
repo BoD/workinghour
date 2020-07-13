@@ -23,11 +23,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.jraf.workinghour.util.mouse
+import kotlinx.coroutines.runBlocking
+import org.jraf.workinghour.main.main
 
-import kotlin.random.Random
-
-actual fun getMouseLocation(): MouseLocation {
-    // TODO
-    return MouseLocation(Random.nextInt(), Random.nextInt())
+fun main() {
+    runBlocking {
+        main()
+    }
 }
