@@ -29,6 +29,7 @@ import org.jraf.workinghour.conf.Configuration
 import org.jraf.workinghour.datetime.Date
 import org.jraf.workinghour.datetime.DateTime
 import org.jraf.workinghour.datetime.Time
+import org.jraf.workinghour.datetime.plus
 import kotlin.time.Duration
 import kotlin.time.days
 import kotlin.time.minutes
@@ -129,7 +130,7 @@ class Repository(
         // Rewind to first non weekend day
         while (day.isWeekend) day -= 1.days
 
-        // Rewind the whole week
+        // Go through the whole week
         while (!day.isWeekend) {
             val firstLogOfDay = firstLogOfDay(day)
             val lastLogOfMorning = lastLogOfMorning(day)
@@ -137,7 +138,7 @@ class Repository(
             val lastLogOfDay = lastLogOfDay(day)
             duration += workDurationForDay(firstLogOfDay, lastLogOfMorning, firstLogOfAfternoon, lastLogOfDay)
 
-            day -= 1.days
+            day += 1.days
         }
 
         return duration
