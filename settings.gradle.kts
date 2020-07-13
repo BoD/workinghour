@@ -15,6 +15,6 @@ pluginManagement {
     }
 }
 
-rootProject.name = "workinghour2"
+rootProject.name = "workinghour"
 
 enableFeaturePreview("GRADLE_METADATA")
