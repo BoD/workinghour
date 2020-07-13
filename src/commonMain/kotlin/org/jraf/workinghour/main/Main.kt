@@ -45,7 +45,7 @@ import kotlin.time.minutes
 
 private val configuration by lazy {
     Configuration(
-        databasePath = "/Users/bod/gitrepo/workinghour/workinghour.db",
+        databasePath = "./workinghour.db",
         startOfDay = Time.build(8, 30),
         endOfMorning = Time.build(13, 0),
         startOfAfternoon = Time.build(13, 0),
