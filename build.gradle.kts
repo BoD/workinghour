@@ -57,8 +57,6 @@ kotlin {
             dependencies {
                 implementation(kotlin("stdlib-jdk8"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$versionsCoroutine")
-//                implementation("org.xerial:sqlite-jdbc:3.32.3")
-//                implementation("com.googlecode.log4jdbc:log4jdbc:1.2")
                 implementation("com.squareup.sqldelight:sqlite-driver:1.4.0")
             }
         }
@@ -75,11 +73,11 @@ kotlin {
                 implementation("com.squareup.sqldelight:native-driver:1.4.0")
             }
         }
-//        macosX64().compilations["test"].defaultSourceSet {
-//            dependencies {
-//                implementation(kotlin("test"))
-//            }
-//        }
+        macosX64().compilations["test"].defaultSourceSet {
+            dependencies {
+                implementation(kotlin("test"))
+            }
+        }
     }
 }
 

@@ -23,14 +23,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.jraf.workinghour.util.mouse
+package org.jraf.workinghour.repository
 
-import kotlinx.cinterop.CValue
-import kotlinx.cinterop.useContents
-import platform.AppKit.NSEvent
-import platform.Foundation.NSPoint
+import com.squareup.sqldelight.db.SqlDriver
+import com.squareup.sqldelight.sqlite.driver.JdbcSqliteDriver
 
-actual fun getMouseLocation(): MouseLocation {
-    val nsPointPtr: CValue<NSPoint> = NSEvent.mouseLocation
-    return nsPointPtr.useContents { MouseLocation(x.toInt(), y.toInt()) }
-}
+actual fun getSqliteDriver(schema: SqlDriver.Schema, databasePath: String): SqlDriver = JdbcSqliteDriver("jdbc:sqlite:$databasePath")

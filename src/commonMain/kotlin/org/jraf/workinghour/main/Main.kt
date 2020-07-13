@@ -45,18 +45,19 @@ import kotlin.time.minutes
 
 private val configuration by lazy {
     Configuration(
-        databasePath = "workinghour.db",
+        databasePath = "/Users/bod/gitrepo/workinghour/workinghour.db",
         startOfDay = Time.build(8, 30),
         endOfMorning = Time.build(13, 0),
         startOfAfternoon = Time.build(13, 0),
         endOfDay = Time.build(21, 30),
-        validDayMinimumDuration = 6.hours
+        validDayMinimumDuration = 6.hours,
+        debugLogs = false
     )
 }
 
 suspend fun main() {
     println("Hello, World!")
-    val db = Repository(configuration, Database(configuration.databasePath))
+    val db = Repository(configuration, Database(configuration.debugLogs, configuration.databasePath))
     Daemon(db).apply { start() }
 
     // Display stats every minute

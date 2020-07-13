@@ -34,5 +34,6 @@ data class Configuration(
     val endOfMorning: Time,
     val startOfAfternoon: Time,
     val endOfDay: Time,
-    val validDayMinimumDuration: Duration
+    val validDayMinimumDuration: Duration,
+    val debugLogs: Boolean
 )
