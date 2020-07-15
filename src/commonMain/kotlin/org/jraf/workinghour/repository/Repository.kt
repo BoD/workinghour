@@ -29,7 +29,9 @@ import org.jraf.workinghour.conf.Configuration
 import org.jraf.workinghour.datetime.Date
 import org.jraf.workinghour.datetime.DateTime
 import org.jraf.workinghour.datetime.Time
+import org.jraf.workinghour.datetime.WeekDay
 import org.jraf.workinghour.datetime.plus
+import org.jraf.workinghour.datetime.weekDay
 import kotlin.time.Duration
 import kotlin.time.days
 import kotlin.time.minutes
@@ -127,8 +129,9 @@ class Repository(
     fun workDurationForWeek(dayIncludedInWeek: Date): Duration {
         var duration = 0.minutes
         var day = dayIncludedInWeek
-        // Rewind to first non weekend day
-        while (day.isWeekend) day -= 1.days
+
+        // Rewind to monday
+        while (day.weekDay != WeekDay.MONDAY) day -= 1.days
 
         // Go through the whole week
         while (!day.isWeekend) {
