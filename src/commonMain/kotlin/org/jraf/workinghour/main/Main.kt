@@ -64,7 +64,7 @@ suspend fun main() {
     GlobalScope.launch {
         while (true) {
             displayStats(db)
-            delay(1.minutes.toLongMilliseconds())
+            delay(1.minutes)
         }
     }
 

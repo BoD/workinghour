@@ -66,7 +66,7 @@ class ActivityDetector(
                 isActive = newMouseLocation != latestMouseLocation
                 latestMouseLocation = newMouseLocation
 
-                delay(monitoringPeriod.toLongMilliseconds())
+                delay(monitoringPeriod)
             }
         }
     }

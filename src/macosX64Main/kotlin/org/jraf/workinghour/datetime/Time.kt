@@ -32,7 +32,7 @@ import platform.Foundation.date
 
 actual fun Time.Companion.now(): Time {
     val nsDate = NSDate.date()
-    val calendar = getNSCalendar()
+    val calendar = getNSCalendar(TimeZoneType.LOCAL)
     val components = calendar.components(NSCalendarUnitHour or NSCalendarUnitMinute, nsDate)
     return build(
         hour = components.hour.toInt(),
