@@ -48,10 +48,15 @@ actual operator fun Date.plus(duration: Duration): Date {
 actual fun Date.Companion.today(): Date = NSDate.date().asDate()
 
 
-fun getNSCalendar(): NSCalendar {
+internal fun getNSCalendar(timeZoneType: TimeZoneType = TimeZoneType.GMT): NSCalendar {
     val calendar = NSCalendar.currentCalendar
-    calendar.timeZone = NSTimeZone.timeZoneWithAbbreviation("GMT")!!
+    if (timeZoneType == TimeZoneType.GMT) calendar.timeZone = NSTimeZone.timeZoneWithAbbreviation("GMT")!!
     return calendar
+}
+
+internal enum class TimeZoneType {
+    LOCAL,
+    GMT,
 }
 
 actual val Date.weekDay: WeekDay

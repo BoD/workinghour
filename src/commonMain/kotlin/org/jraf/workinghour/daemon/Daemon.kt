@@ -66,7 +66,7 @@ class Daemon(
             while (true) {
                 val todayNow = DateTime.todayNow()
                 if (activityDetector.isActive) repository.logActive(todayNow)
-                delay(activityMonitoringPeriod.toLongMilliseconds())
+                delay(activityMonitoringPeriod)
             }
         }
     }
